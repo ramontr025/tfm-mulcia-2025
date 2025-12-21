@@ -1,0 +1,18 @@
+[workspace]
+authors = ["Ramón <rtrinidadac25@gmail.com>"]
+channels = ["conda-forge"]
+name = "tfm-mulcia-2025"
+platforms = ["win-64"]
+version = "0.1.0"
+
+[tasks]
+
+[dependencies]
+python = "3.11.*"
+pandas = ">=2.3.3,<3"
+scikit-learn = ">=1.8.0,<2"
+matplotlib = ">=3.10.8,<4"
+seaborn = ">=0.13.2,<0.14"
+jupyterlab = ">=4.5.0,<5"
+requests = ">=2.32.5,<3"
+python-dotenv = ">=1.2.1,<2"

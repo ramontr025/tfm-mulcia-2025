@@ -1,0 +1,16 @@
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# Datos (NUNCA subir datos reales o sintéticos pesados)
+data/
+*.csv
+*.CSV
+*.xlsx
+
+# Entorno y archivos temporales
+.env
+.pixi/
+.ipynb_checkpoints/
+__pycache__/
+results/*.pkl
