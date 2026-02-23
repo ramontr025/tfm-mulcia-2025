@@ -1,0 +1,417 @@
+{
+    "Group_Asistencia_Respiratoria": {
+        "243174005": "Weaning from mechanically assisted ventilation (procedure)",
+        "40617009": "Artificial respiration (procedure)",
+        "26763009": "Controlled ventilation procedure and therapy  initiation and management (procedure)"
+    },
+    "Pregnancy termination care": {
+        "386394001": "Pregnancy termination care"
+    },
+    "Pulmonary rehabilitation (regime/therapy)": {
+        "15081005": "Pulmonary rehabilitation (regime/therapy)"
+    },
+    "Movement therapy (regime/therapy)": {
+        "229064008": "Movement therapy (regime/therapy)"
+    },
+    "Professional / ancillary services care (regime/therapy)": {
+        "409023009": "Professional / ancillary services care (regime/therapy)"
+    },
+    "Speech and language therapy regime (regime/therapy": {
+        "311555007": "Speech and language therapy regime (regime/therapy"
+    },
+    "Occupational therapy (regime/therapy)": {
+        "84478008": "Occupational therapy (regime/therapy)"
+    },
+    "Physical therapy procedure (regime/therapy)": {
+        "91251008": "Physical therapy procedure (regime/therapy)"
+    },
+    "Nursing care/supplementary surveillance (regime/therapy)": {
+        "410401003": "Nursing care/supplementary surveillance (regime/therapy)"
+    },
+    "Hospice care (regime/therapy)": {
+        "385763009": "Hospice care (regime/therapy)"
+    },
+    "Admission to long stay hospital": {
+        "305340004": "Admission to long stay hospital"
+    },
+    "Transplant of lung (procedure)": {
+        "88039007": "Transplant of lung (procedure)"
+    },
+    "Group_rx_otros": {
+        "268425006": "Pelvis X-ray",
+        "19490002": "Ankle X-ray",
+        "60027007": "X-ray or wrist",
+        "74016001": "Knee X-ray"
+    },
+    "Admit to ICU (procedure)": {
+        "305351004": "Admit to ICU (procedure)"
+    },
+    "Transfer to stepdown unit (procedure)": {
+        "449214001": "Transfer to stepdown unit (procedure)"
+    },
+    "Group_Procedure_on_heart": {
+        "447365002": "Insertion of biventricular implantable cardioverter defibrillator",
+        "232967006": "Implantation of left ventricular assist device (procedure)",
+        "415070008": "Percutaneous coronary intervention",
+        "32413006": "Transplantation of heart (procedure)"
+    },
+    "Comprehensive interview and evaluation (procedure)": {
+        "200619008": "Comprehensive interview and evaluation (procedure)"
+    },
+    "Referral to home health care service (procedure)": {
+        "417511005": "Referral to home health care service (procedure)"
+    },
+    "Coordination of care plan (procedure)": {
+        "711069006": "Coordination of care plan (procedure)"
+    },
+    "Upper arm X-ray": {
+        "1225002": "Upper arm X-ray"
+    },
+    "Biopsy of breast (procedure)": {
+        "122548005": "Biopsy of breast (procedure)"
+    },
+    "Human epidermal growth factor receptor 2 gene detection by immunohistochemistry (procedure)": {
+        "433114000": "Human epidermal growth factor receptor 2 gene detection by immunohistochemistry (procedure)"
+    },
+    "Human epidermal growth factor receptor 2 gene detection by fluorescence in situ hybridization (procedure)": {
+        "434363004": "Human epidermal growth factor receptor 2 gene detection by fluorescence in situ hybridization (procedure)"
+    },
+    "Mammography (procedure)": {
+        "71651007": "Mammography (procedure)"
+    },
+    "Admission to orthopedic department": {
+        "305428000": "Admission to orthopedic department"
+    },
+    "Antenatal RhD antibody screening": {
+        "169673001": "Antenatal RhD antibody screening"
+    },
+    "Subcutaneous immunotherapy": {
+        "180256009": "Subcutaneous immunotherapy"
+    },
+    "Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance": {
+        "433112001": "Percutaneous mechanical thrombectomy of portal vein using fluoroscopic guidance"
+    },
+    "Allergy screening test": {
+        "395142003": "Allergy screening test"
+    },
+    "Cesarean section": {
+        "11466000": "Cesarean section"
+    },
+    "Replacement of contraceptive intrauterine device": {
+        "46706006": "Replacement of contraceptive intrauterine device"
+    },
+    "Combined chemotherapy and radiation therapy (procedure)": {
+        "703423002": "Combined chemotherapy and radiation therapy (procedure)"
+    },
+    "Medical induction of labor": {
+        "31208007": "Medical induction of labor"
+    },
+    "Care regimes assessment (procedure)": {
+        "392091000": "Care regimes assessment (procedure)"
+    },
+    "Partial resection of colon": {
+        "43075005": "Partial resection of colon"
+    },
+    "Epidural anesthesia": {
+        "18946005": "Epidural anesthesia"
+    },
+    "Cardiovascular stress testing (procedure)": {
+        "76746007": "Cardiovascular stress testing (procedure)"
+    },
+    "Electrical cardioversion": {
+        "180325003": "Electrical cardioversion"
+    },
+    "Catheter ablation of tissue of heart": {
+        "18286008": "Catheter ablation of tissue of heart"
+    },
+    "Removal of subcutaneous contraceptive": {
+        "301807007": "Removal of subcutaneous contraceptive"
+    },
+    "Spirometry (procedure)": {
+        "127783003": "Spirometry (procedure)"
+    },
+    "Episiotomy": {
+        "85548006": "Episiotomy"
+    },
+    "Bone immobilization": {
+        "274474001": "Bone immobilization"
+    },
+    "Sputum examination (procedure)": {
+        "269911007": "Sputum examination (procedure)"
+    },
+    "Insertion of subcutaneous contraceptive": {
+        "169553002": "Insertion of subcutaneous contraceptive"
+    },
+    "Peripheral blood smear interpretation": {
+        "14768001": "Peripheral blood smear interpretation"
+    },
+    "Brief general examination (procedure)": {
+        "162676008": "Brief general examination (procedure)"
+    },
+    "Review of systems (procedure)": {
+        "415300000": "Review of systems (procedure)"
+    },
+    "Removal of intrauterine device": {
+        "68254000": "Removal of intrauterine device"
+    },
+    "Bone density scan (procedure)": {
+        "312681000": "Bone density scan (procedure)"
+    },
+    "Insertion of intrauterine contraceptive device": {
+        "65200003": "Insertion of intrauterine contraceptive device"
+    },
+    "Prostatectomy": {
+        "90470006": "Prostatectomy"
+    },
+    "Throat culture (procedure)": {
+        "117015009": "Throat culture (procedure)"
+    },
+    "Screening for occult blood in feces (procedure)": {
+        "104435004": "Screening for occult blood in feces (procedure)"
+    },
+    "Rectal polypectomy": {
+        "274031008": "Rectal polypectomy"
+    },
+    "Pre-discharge assessment (procedure)": {
+        "225386006": "Pre-discharge assessment (procedure)"
+    },
+    "History AND physical examination (procedure)": {
+        "63332003": "History AND physical examination (procedure)"
+    },
+    "Measurement of respiratory function (procedure)": {
+        "23426006": "Measurement of respiratory function (procedure)"
+    },
+    "Biopsy of prostate": {
+        "65575008": "Biopsy of prostate"
+    },
+    "Streptococcus pneumoniae group B antigen test": {
+        "118001005": "Streptococcus pneumoniae group B antigen test"
+    },
+    "Fetal anatomy study": {
+        "271442007": "Fetal anatomy study"
+    },
+    "Alpha-fetoprotein test": {
+        "275833003": "Alpha-fetoprotein test"
+    },
+    "Urine screening for glucose": {
+        "268556000": "Urine screening for glucose"
+    },
+    "Vaccination for diphtheria  pertussis  and tetanus": {
+        "399014008": "Vaccination for diphtheria  pertussis  and tetanus"
+    },
+    "Measurement of Varicella-zoster virus antibody": {
+        "104326007": "Measurement of Varicella-zoster virus antibody"
+    },
+    "Hepatitis C antibody test": {
+        "104375008": "Hepatitis C antibody test"
+    },
+    "Urine culture": {
+        "117010004": "Urine culture"
+    },
+    "Gonorrhea infection test": {
+        "165829005": "Gonorrhea infection test"
+    },
+    "Urine protein test": {
+        "167271000": "Urine protein test"
+    },
+    "Rubella screening": {
+        "169690007": "Rubella screening"
+    },
+    "Syphilis infection test": {
+        "269828009": "Syphilis infection test"
+    },
+    "Skin test for tuberculosis": {
+        "28163009": "Skin test for tuberculosis"
+    },
+    "Chlamydia antigen test": {
+        "310861008": "Chlamydia antigen test"
+    },
+    "Human immunodeficiency virus antigen test": {
+        "31676001": "Human immunodeficiency virus antigen test"
+    },
+    "Urine screening test for diabetes": {
+        "395123002": "Urine screening test for diabetes"
+    },
+    "Screening for chromosomal aneuploidy in prenatal amniotic fluid": {
+        "443529005": "Screening for chromosomal aneuploidy in prenatal amniotic fluid"
+    },
+    "Blood typing  RH typing": {
+        "44608003": "Blood typing  RH typing"
+    },
+    "Hepatitis B Surface Antigen Measurement": {
+        "47758006": "Hepatitis B Surface Antigen Measurement"
+    },
+    "Hemoglobin / Hematocrit / Platelet count": {
+        "104091002": "Hemoglobin / Hematocrit / Platelet count"
+    },
+    "Auscultation of the fetal heart": {
+        "225158009": "Auscultation of the fetal heart"
+    },
+    "Evaluation of uterine fundal height": {
+        "274804006": "Evaluation of uterine fundal height"
+    },
+    "Heart failure education (procedure)": {
+        "423475008": "Heart failure education (procedure)"
+    },
+    "Cytopathology procedure  preparation of smear  genital source": {
+        "90226004": "Cytopathology procedure  preparation of smear  genital source"
+    },
+    "Ultrasound scan for fetal viability": {
+        "169230002": "Ultrasound scan for fetal viability"
+    },
+    "Standard pregnancy test": {
+        "252160004": "Standard pregnancy test"
+    },
+    "Physical examination": {
+        "5880005": "Physical examination"
+    },
+    "Assessment using New York Heart Association Classification (procedure)": {
+        "762998009": "Assessment using New York Heart Association Classification (procedure)"
+    },
+    "Oxygen administration by mask (procedure)": {
+        "371908008": "Oxygen administration by mask (procedure)"
+    },
+    "Placing subject in prone position (procedure)": {
+        "431182000": "Placing subject in prone position (procedure)"
+    },
+    "Electrocardiographic procedure": {
+        "29303009": "Electrocardiographic procedure"
+    },
+    "Digital examination of rectum": {
+        "410006001": "Digital examination of rectum"
+    },
+    "Patient discharge (procedure)": {
+        "58000006": "Patient discharge (procedure)"
+    },
+    "Plain chest X-ray (procedure)": {
+        "399208008": "Plain chest X-ray (procedure)"
+    },
+    "Echocardiography (procedure)": {
+        "40701008": "Echocardiography (procedure)"
+    },
+    "Assessment using Morse Fall Scale (procedure)": {
+        "762993000": "Assessment using Morse Fall Scale (procedure)"
+    },
+    "Depression screening using Patient Health Questionnaire Nine Item score (procedure)": {
+        "715252007": "Depression screening using Patient Health Questionnaire Nine Item score (procedure)"
+    },
+    "Notifications (procedure)": {
+        "185087000": "Notifications (procedure)"
+    },
+    "Certification procedure (procedure)": {
+        "310417005": "Certification procedure (procedure)"
+    },
+    "Initial patient assessment (procedure)": {
+        "315639002": "Initial patient assessment (procedure)"
+    },
+    "Development of individualized plan of care (procedure)": {
+        "370789001": "Development of individualized plan of care (procedure)"
+    },
+    "Colonoscopy": {
+        "73761001": "Colonoscopy"
+    },
+    "Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)": {
+        "763302001": "Assessment using Alcohol Use Disorders Identification Test - Consumption (procedure)"
+    },
+    "Screening for drug abuse (procedure)": {
+        "713106006": "Screening for drug abuse (procedure)"
+    },
+    "Assessment of substance use (procedure)": {
+        "428211000124100": "Assessment of substance use (procedure)"
+    },
+    "Screening for domestic abuse (procedure)": {
+        "866148006": "Screening for domestic abuse (procedure)"
+    },
+    "Assessment of anxiety (procedure)": {
+        "710841007": "Assessment of anxiety (procedure)"
+    },
+    "Depression screening (procedure)": {
+        "171207006": "Depression screening (procedure)"
+    },
+    "Medication Reconciliation (procedure)": {
+        "430193006": "Medication Reconciliation (procedure)"
+    },
+    "Assessment of health and social care needs (procedure)": {
+        "710824005": "Assessment of health and social care needs (procedure)"
+    },
+    "Group_Counseling": {
+        "183418007": "Social case work (regime/therapy)",
+        "10383002": "Counseling for termination of pregnancy"
+    },
+    "Group_Thorax_repair": {
+        "232717009": "Coronary artery bypass grafting",
+        "429609002": "Lung volume reduction surgery (procedure)"
+    },
+    "Group_Examination_of_body_system": {
+        "35025007": "Manual pelvic examination (procedure)",
+        "112790001": "Nasal sinus endoscopy (procedure)"
+    },
+    "Group_Biopsy": {
+        "76164006": "Biopsy of colon",
+        "396487001": "Sentinel lymph node biopsy (procedure)"
+    },
+    "Group_Administration_of_medication": {
+        "430701006": "Resuscitation using intravenous fluid (procedure)",
+        "367336001": "Chemotherapy (procedure)"
+    },
+    "Group_Radiographic_imaging_procedure": {
+        "168594001": "Clavicle X-ray",
+        "24623002": "Screening mammography (procedure)"
+    },
+    "Group_Fetal_procedure": {
+        "236974004": "Instrumental delivery",
+        "714812005": "Induced termination of pregnancy"
+    },
+    "Group_Limb_operation": {
+        "234262008": "Excision of axillary lymph node (procedure)",
+        "699253003": "Surgical manipulation of joint of knee",
+        "387685009": "Surgical manipulation of shoulder joint"
+    },
+    "Group_Procedure_on_female_genital_organ": {
+        "237001001": "Augmentation of labor",
+        "287664005": "Bilateral tubal ligation",
+        "445912000": "Excision of fallopian tube and surgical removal of ectopic pregnancy"
+    },
+    "Group_Imaging_of_breast": {
+        "241615005": "Magnetic resonance imaging of breast (procedure)",
+        "1571000087109": "Ultrasonography of bilateral breasts (procedure)"
+    },
+    "Group_Regimes_and_therapies": {
+        "408919008": "Psychosocial care (regime/therapy)",
+        "228557008": "Cognitive and behavioral therapy (regime/therapy)",
+        "385781007": "Home health aide service (regime/therapy)",
+        "385798007": "Radiation therapy care (regime/therapy)",
+        "182777000": "Monitoring of patient (regime/therapy)"
+    },
+    "Group_Introduction_procedure": {
+        "112798008": "Insertion of endotracheal tube (procedure)",
+        "447759004": "Brachytherapy of breast (procedure)",
+        "180207008": "Intravenous blood transfusion of packed cells (procedure)",
+        "52765003": "Intubation",
+        "33195004": "Teleradiotherapy procedure (procedure)"
+    },
+    "Group_Removal": {
+        "392021009": "Lumpectomy of breast (procedure)",
+        "271280005": "Removal of endotracheal tube (procedure)",
+        "443497002": "Excision of sentinel lymph node (procedure)",
+        "45595009": "Laparoscopic Removal of Gall Bladder",
+        "22523008": "Vasectomy",
+        "65546002": "Extraction of wisdom tooth"
+    },
+    "Group_Rare_Procedures_Therapies": {
+        "385892002": "Mental health screening (procedure)",
+        "387607004": "Construction of diverting colostomy",
+        "265764009": "Renal dialysis (procedure)",
+        "183450002": "Admission to burn unit",
+        "426701000119108": "Ultrasonography of abdomen  right upper quadrant and epigastrium",
+        "305433001": "Admission to trauma surgery department",
+        "108290001": "Radiation oncology AND/OR radiotherapy (procedure)",
+        "311791003": "Information gathering (procedure)",
+        "241055006": "Mammogram - symptomatic (procedure)",
+        "69031006": "Excision of breast tissue (procedure)",
+        "54550000": "Seizure Count Cerebral Cortex Electroencephalogram (EEG)",
+        "177157003": "Spontaneous breech delivery",
+        "243063003": "Postoperative procedure education (procedure)",
+        "225337009": "Suicide risk assessment (procedure)"
+    }
+}

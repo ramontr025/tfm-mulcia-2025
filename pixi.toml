@@ -16,3 +16,8 @@ seaborn = ">=0.13.2,<0.14"
 jupyterlab = ">=4.5.0,<5"
 requests = ">=2.32.5,<3"
 python-dotenv = ">=1.2.1,<2"
+openpyxl = ">=3.1.5,<4"
+
+[pypi-dependencies]
+gower = ">=0.1.2, <0.2"
+scikit-learn-extra = ">=0.3.0, <0.4"
