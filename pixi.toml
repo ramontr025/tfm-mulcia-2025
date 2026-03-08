@@ -17,7 +17,12 @@ jupyterlab = ">=4.5.0,<5"
 requests = ">=2.32.5,<3"
 python-dotenv = ">=1.2.1,<2"
 openpyxl = ">=3.1.5,<4"
+plotly = ">=6.5.2,<7"
+statsmodels = ">=0.14.6,<0.15"
+xgboost = ">=3.2.0,<4"
+interpret = ">=0.7.6,<0.8"
 
 [pypi-dependencies]
 gower = ">=0.1.2, <0.2"
 scikit-learn-extra = ">=0.3.0, <0.4"
+rulefit = ">=0.3.1, <0.4"

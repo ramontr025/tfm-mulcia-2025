@@ -15,3 +15,6 @@ data/
 __pycache__/
 results/*.pkl
 .Rproj.user
+
+# Skills Base y Agentes
+.agent/skills/

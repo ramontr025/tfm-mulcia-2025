@@ -1,0 +1,92 @@
+---
+title: Cribado de cáncer de pulmón
+author: Ramón Trinidad Acedo
+resumen: Tu resumen aquí
+palabras-clave: [Palabra01, Palabra02]  
+abstract: Tu resumen en inglés aquí
+keywords: [Word01, Word02]
+agradecimientos: Tus agradecimientos aquí
+lang: es
+date: today
+date-format: full
+bibliography: referencias.bib
+format:
+  memoriatfetypst-typst: 
+    toc: true
+    #bibliographystyle: apa
+    #bibliographystyle: chicago-author-date
+    #keep-typ: true
+    tofiguras: true
+    totablas: true
+    papersize: a4
+    portada: true
+    logo-file: "logo.png"
+    facultad: "Facultad de Matemáticas"
+    universidad: "Universidad de Sevilla"
+    tutor-TFG: "Tutor: Nombre de tu tutor aquí"
+    fecha-TFG: "Sevilla, Junio de 2026"
+    nombre-capitulo: "CAPÍTULO"
+    apendice-portada: "Apéndice"
+    apendice-nombre: "Apéndice"
+    referencias-nombre: "Referencias"
+    cabecera-capitulo: "estilo01"
+    # margin: {x: 2cm, y: 2cm}
+    toccapitulos: false
+    bibliografia-completa: false
+  html:
+    toc: true
+    toc-title: "Tabla de Contenidos"
+    number-sections: true
+    code-tools: 
+      source: true
+    embed-resources: true
+execute:
+  eval: false
+  warning: false
+  message: false
+---
+
+# Capítulo 1
+{{< include capitulo01.qmd >}}
+
+<!-- {{< include capitulo02.qmd >}} -->
+
+{{< appendix >}}
+
+# Apéndice A
+
+## Atributos reveladores de cáncer de pulmón
+
+::: {#tbl-reveladoras-cancer}
+| Código | Descripción |
+|:---|:---|
+| C-33756-8 | Polyp size greatest dimension by CAP cancer protocols |
+| C-88040-1 | Response to cancer treatment |
+| C-59557-9 | Treatment status Cancer |
+| C-21908-9 | Stage group.clinical Cancer |
+| C-85318-4 | HER2 [Presence] in Breast cancer specimen by FISH |
+| C-85319-2 | HER2 [Presence] in Breast cancer specimen by Immune stain |
+| C-85337-4 | Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain |
+| C-85339-0 | Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain |
+| C-21924-6 | Tumor marker Cancer |
+| C-367336001 | Chemotherapy (procedure) |
+| C-703423002 | Combined chemotherapy and radiation therapy |
+| C-108290001 | Radiation oncology AND/OR radiotherapy |
+| C-385798007 | Radiation therapy care |
+| C-597195 | Carboplatin 10 MG/ML Injectable Solution |
+| C-583214 | Paclitaxel 100 MG Injection |
+| C-1860480 | DOCEtaxel 20 MG/ML Injection |
+| C-1734919 | Cyclophosphamide 1000 MG Injection |
+| C-429609002 | Lung volume reduction surgery |
+| C-88039007 | Transplant of lung |
+| C-232657004 | Lung Transplant |
+| scc | Squamous Cell Carcinoma Antigen |
+
+: "Variables y marcadores reveladores de estado oncológico eliminados para prevenir data leakage."
+:::
+
+
+
+
+
+
