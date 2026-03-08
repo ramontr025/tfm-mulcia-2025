@@ -21,10 +21,12 @@ format:
     papersize: a4
     portada: true
     logo-file: "logo.png"
-    facultad: "Facultad de Matemáticas"
+    facultad: "Escuela Superior Técnica de Ingeniería Informática"
     universidad: "Universidad de Sevilla"
-    tutor-TFG: "Tutor: Nombre de tu tutor aquí"
-    fecha-TFG: "Sevilla, Junio de 2026"
+    titulacion: "Máster Universitario en Lógica, Computación en Inteligencia Artificial"
+    tipo-TFG: "TRABAJO FIN DE MÁSTER"
+    tutor-TFG: "Tutor: Carlos Loucera Muñecas"
+    fecha-TFG: "Sevilla, Marzo de 2026"
     nombre-capitulo: "CAPÍTULO"
     apendice-portada: "Apéndice"
     apendice-nombre: "Apéndice"

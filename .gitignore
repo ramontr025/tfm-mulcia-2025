@@ -21,3 +21,6 @@ results/*.pkl
 
 # Despliegue Docker
 despliegue_Docker/
+
+# MemoriaTFM
+MemoriaTFM/images/
