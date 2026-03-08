@@ -1,4 +1,0 @@
-# Bibliografía {.unnumbered}
-
-::: {#refs}
-:::
