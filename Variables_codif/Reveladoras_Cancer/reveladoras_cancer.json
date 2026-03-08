@@ -1,0 +1,23 @@
+{
+    "Polyp size greatest dimension by CAP cancer protocols": "C-33756-8",
+    "Response to cancer treatment": "C-88040-1",
+    "Treatment status Cancer": "C-59557-9",
+    "Stage group.clinical Cancer": "C-21908-9",
+    "HER2 [Presence] in Breast cancer specimen by FISH": "C-85318-4",
+    "HER2 [Presence] in Breast cancer specimen by Immune stain": "C-85319-2",
+    "Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain": "C-85337-4",
+    "Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain": "C-85339-0",
+    "Tumor marker Cancer": "C-21924-6",
+    "Squamous Cell Carcinoma Antigen": "scc",
+    "Chemotherapy (procedure)": "C-367336001",
+    "Combined chemotherapy and radiation therapy": "C-703423002",
+    "Radiation oncology AND/OR radiotherapy": "C-108290001",
+    "Radiation therapy care": "C-385798007",
+    "Carboplatin 10 MG/ML Injectable Solution": "C-597195",
+    "Paclitaxel 100 MG Injection": "C-583214",
+    "DOCEtaxel 20 MG/ML Injection": "C-1860480",
+    "Cyclophosphamide 1000 MG Injection": "C-1734919",
+    "Lung volume reduction surgery": "C-429609002",
+    "Transplant of lung": "C-88039007",
+    "Lung Transplant": "C-232657004"
+}
