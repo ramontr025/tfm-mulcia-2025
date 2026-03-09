@@ -34,9 +34,6 @@
     "Admission to long stay hospital": {
         "305340004": "Admission to long stay hospital"
     },
-    "Transplant of lung (procedure)": {
-        "88039007": "Transplant of lung (procedure)"
-    },
     "Group_rx_otros": {
         "268425006": "Pelvis X-ray",
         "19490002": "Ankle X-ray",
@@ -99,9 +96,6 @@
     },
     "Replacement of contraceptive intrauterine device": {
         "46706006": "Replacement of contraceptive intrauterine device"
-    },
-    "Combined chemotherapy and radiation therapy (procedure)": {
-        "703423002": "Combined chemotherapy and radiation therapy (procedure)"
     },
     "Medical induction of labor": {
         "31208007": "Medical induction of labor"
@@ -338,9 +332,8 @@
         "183418007": "Social case work (regime/therapy)",
         "10383002": "Counseling for termination of pregnancy"
     },
-    "Group_Thorax_repair": {
-        "232717009": "Coronary artery bypass grafting",
-        "429609002": "Lung volume reduction surgery (procedure)"
+    "Coronary artery bypass grafting": {
+        "232717009": "Coronary artery bypass grafting"
     },
     "Group_Examination_of_body_system": {
         "35025007": "Manual pelvic examination (procedure)",
@@ -350,9 +343,8 @@
         "76164006": "Biopsy of colon",
         "396487001": "Sentinel lymph node biopsy (procedure)"
     },
-    "Group_Administration_of_medication": {
-        "430701006": "Resuscitation using intravenous fluid (procedure)",
-        "367336001": "Chemotherapy (procedure)"
+    "Resuscitation using intravenous fluid (procedure)": {
+        "430701006": "Resuscitation using intravenous fluid (procedure)"
     },
     "Group_Radiographic_imaging_procedure": {
         "168594001": "Clavicle X-ray",
@@ -380,7 +372,6 @@
         "408919008": "Psychosocial care (regime/therapy)",
         "228557008": "Cognitive and behavioral therapy (regime/therapy)",
         "385781007": "Home health aide service (regime/therapy)",
-        "385798007": "Radiation therapy care (regime/therapy)",
         "182777000": "Monitoring of patient (regime/therapy)"
     },
     "Group_Introduction_procedure": {
@@ -405,7 +396,6 @@
         "183450002": "Admission to burn unit",
         "426701000119108": "Ultrasonography of abdomen  right upper quadrant and epigastrium",
         "305433001": "Admission to trauma surgery department",
-        "108290001": "Radiation oncology AND/OR radiotherapy (procedure)",
         "311791003": "Information gathering (procedure)",
         "241055006": "Mammogram - symptomatic (procedure)",
         "69031006": "Excision of breast tissue (procedure)",

@@ -11,14 +11,14 @@ print(f"PROJECT_ROOT set to: {PROJECT_ROOT}")
 DATA_DIR = PROJECT_ROOT / 'data'
 
 MAPPINGS = [
-    PROJECT_ROOT / 'Variables_codif/SNOMED/Prueba_ECL/feature_mapping_disorder_finding.json',
-    PROJECT_ROOT / 'Variables_codif/SNOMED/Prueba_ECL/feature_mapping_procedures_therapies.json',
-    PROJECT_ROOT / 'Variables_codif/SNOMED/Prueba_ECL/feature_mapping_resto.json'
+    PROJECT_ROOT / 'Variables_codif/SNOMED/JSON/feature_mapping_disorder_finding.json',
+    PROJECT_ROOT / 'Variables_codif/SNOMED/JSON/feature_mapping_procedures_therapies.json',
+    PROJECT_ROOT / 'Variables_codif/SNOMED/JSON/feature_mapping_resto.json'
 ]
 
 DATA_FILE = DATA_DIR / 'synthea_30k.csv'
 SNOMED_CODES_LIST = DATA_DIR / 'codificaciones_identificadas.xlsx'
-OUTPUT_FILE = PROJECT_ROOT / 'Variables_codif/SNOMED/Prueba_ECL/snomed_data_types_report.xlsx'
+OUTPUT_FILE = PROJECT_ROOT / 'Variables_codif/SNOMED/snomed_data_types_report.xlsx'
 
 def get_inferred_type(unique_vals):
     if len(unique_vals) == 0:
@@ -122,7 +122,13 @@ def main():
         col_type = row['Inferred_Data_Type']
         
         if col_type in ['Pure Boolean (True only)', 'Boolean (True/False)']:
-            df[col] = df[col].apply(lambda x: 1 if pd.notna(x) and str(x).lower().strip() in ['true', '1', '1.0', 'positive', 'yes'] else 0)
+            def map_bool(x):
+                if pd.isna(x): return pd.NA
+                s = str(x).lower().strip()
+                if s in ['true', '1', '1.0', 'positive', 'yes']: return 1
+                if s in ['false', '0', '0.0', 'negative', 'no']: return 0
+                return pd.NA
+            df[col] = df[col].apply(map_bool).astype('Int64')
         elif col_type == 'Continuous Numeric':
             df[col] = pd.to_numeric(df[col], errors='coerce')
 
@@ -130,6 +136,10 @@ def main():
     print("\nApplying JSON Groupings to generate final features...")
     df_final = pd.DataFrame()
     total_new_features = 0
+    incompatible_groups_info = []
+    
+    # Store a mapping of column to its inferred type for easy lookup
+    type_map = dict(zip(report_df['SNOMED_Code'], report_df['Inferred_Data_Type']))
     
     for mapping_file in MAPPINGS:
         try:
@@ -140,7 +150,9 @@ def main():
             continue
             
         for group_name, codes_dict in mapping.items():
-            new_col_name = f"{group_name.replace(' ', '_').replace('(', '').replace(')', '')}"
+            # Limpiamos el nombre original de paréntesis y espacios problemáticos, pero usamos la clave original del JSON para nombre final
+            # Ya que pidiste: "las variables deben ser los nombres (clave 1) del json)"
+            new_col_name = group_name
             cols_to_combine = [f"C-{c}" for c in codes_dict.keys() if f"C-{c}" in df.columns]
             
             if not cols_to_combine:
@@ -149,15 +161,65 @@ def main():
             if len(cols_to_combine) == 1:
                 # Single variable (like rest/standalones), copy it preserving its type/categories
                 df_final[new_col_name] = df[cols_to_combine[0]]
+                total_new_features += 1
             else:
-                # Multiple variables (disorders/procedures mapped to 1/0), take the logical max/OR
-                df_final[new_col_name] = df[cols_to_combine].max(axis=1)
+                # Multiple variables -> CHECK FOR CONFLICTS
+                types_in_group = [type_map.get(col, 'Unknown') for col in cols_to_combine]
                 
-            total_new_features += 1
+                # Consider Compatible if ALL are boolean (or empty)
+                boolean_types = {'Pure Boolean (True only)', 'Boolean (True/False)', 'Empty (All Null)'}
+                all_boolean_compatible = all(t in boolean_types for t in types_in_group)
+                
+                # Check if it's safe to aggregate (which currently we only do max() so it requires boolean or numeric)
+                # If they mix categorical with boolean, it's incompatible.
+                if not all_boolean_compatible:
+                    # Collect details to warn user
+                    conflict_details = []
+                    for col, typ in zip(cols_to_combine, types_in_group):
+                        original_code = col.replace("C-", "")
+                        name_in_json = codes_dict.get(original_code, "Unknown")
+                        conflict_details.append(f"{col} ({name_in_json}): {typ}")
+                    
+                    incompatible_groups_info.append({
+                        "group": group_name,
+                        "details": conflict_details
+                    })
+                    
+                    # Add them INDIVIDUALLY and NOT aggregated
+                    for col in cols_to_combine:
+                        original_code = col.replace("C-", "")
+                        indiv_name = codes_dict.get(original_code, f"Indiv_{original_code}")
+                        df_final[indiv_name] = df[col]
+                        total_new_features += 1
+                    
+                else:
+                    # Multiple variables (boolean), take the logical max/OR
+                    df_final[new_col_name] = df[cols_to_combine].max(axis=1)
+                    total_new_features += 1
+                    
+    # Añadir variables base y demográficas
+    print("\nAdding base and demographic columns...")
+    demographic_cols = ['ptnum', 'race', 'marital', 'ethnic', 'ethnicity', 'gender', 'state', 'age']
+    for col in demographic_cols:
+        if col in df.columns:
+            df_final[col] = df[col]
 
-    OUTPUT_CSV = DATA_DIR / 'synthea_30k_snomed_typed.csv'
-    print(f"\nConsolidation complete. Created {total_new_features} grouped features.")
-    print(f"Saving final dataset (only JSON variables) to {OUTPUT_CSV}...")
+    OUTPUT_CSV = DATA_DIR / 'synthea_snomed_grouped.csv'
+    print(f"\nConsolidation complete. Created {total_new_features} grouped/individual features.")
+    
+    if incompatible_groups_info:
+        print("\n" + "="*80)
+        print(" INCOMPATIBLE GROUPS DETECTED ")
+        print("The following groups contained mixed mathematical types (e.g., Boolean mixed with Categorical).")
+        print("Instead of aggregating them improperly, they have been added as INDIVIDUAL columns.")
+        print("="*80)
+        for info in incompatible_groups_info:
+            print(f"\nGroup: '{info['group']}'")
+            for detail in info["details"]:
+                print(f"  - {detail}")
+        print("="*80 + "\n")
+        
+    print(f"Saving final dataset to {OUTPUT_CSV}...")
     df_final.to_csv(OUTPUT_CSV, index=False)
     print("Done!")
 

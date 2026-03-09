@@ -10,7 +10,7 @@
         - Por último se analizan las variables originales con `analyze_snomed_data_types.py` para asegurarnos de que las agrupaciones se hacen de manera correcta.
 
     - RxNorm: Contiene los script, excel y json necesarios para la codificación de las variables RxNorm y su mapeo a ATC. 
-        - Se mapean los códigos RxNorm a ATC 5, luego se agrupan en ATC 3. Esta agrupación se encuentra en el JSON. Para crear el csv se usa el script `analyze_rxnorm_data_types.py`.
+        - Se mapean los códigos RxNorm a ATC 5, luego se agrupan en ATC 2. Esta agrupación se encuentra en el JSON. Para crear el csv se usa el script `analyze_rxnorm_data_types.py`.
 
-    - Contiene script suelto `extract_loinc` usado para crear el csv de datos de laboratorio.
-- 
+    - LOINC: Contiene los script, excel y json necesarios para la codificación de las variables LOINC.
+    - Reveladoras_Cancer: Contiene json con las variables reveladoras de cáncer que no suelen ser habituales en cribados generales.
