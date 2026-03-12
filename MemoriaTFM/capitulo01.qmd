@@ -133,4 +133,48 @@ Finalmente, se redujo en número de medicamentos de 200 principios activos inici
 
 Estas variables están codificadas según la nomenclatura LOINC, que es el estándar internacional para la identificación de mediciones de salud, observaciones clínicas y documentos [@loinc].
 
-De todas las incluidas originalmente, haremos una selección de las más comunes
+De todas las incluidas originalmente, haremos una selección de las más comunes para el análisis.
+
+{{< pagebreak >}}
+
+## Modelos predictivos de aprendizaje automático.
+
+El proyecto que plantamos se enmarca en el mundo de la inteligencia artificial y el aprendizaje automático como un problema de aprendizaje supervisado, donde tenemos un conjunto de datos con variables predictoras y una variable objetivo, y queremos entrenar un modelo que pueda predecir la variable objetivo a partir de las variables predictoras. En nuestro caso, la variable objetivo es el diagnóstico de cáncer de pulmón, y las variables predictoras son el resto de variables del dataset.
+
+Para la realización del aproach inicial recurrimos a uno de los modelos más tradicionales en el mundo del aprendizaje automático, la regresión logística. Este modelo es un modelo lineal, es decir, se trata de modelar la variable objetivo en base a una combinación lineal de características. A pesar de su simplicidad, es un modelo efectivo que puede ser utilizado como línea base para comparar con otros modelos más complejos.
+
+Nuestro objetivo ahora es aumentar la complejidad y trabajar con algoritmos más sofisticados, que puedan extraer información más completa de los datos (relaciones no lineales, interacciones complejas, etc.) y que nos permitan obtener mejores resultados. A continuación se describen con detalle los algoritmos que se usan en este proyecto. Principalmente, introduciremos métodos basados en árboles. Estos algoritmos nacen de aplicar a un conjunto de árboles de decisión distintos métodos de ensamblaje. Dependiendo del tipo de ensamblaje tenemos:
+
+-   Bagging: Se basa en la idea de usar un predictor determinado sobre distintos subconjuntos de datos del conjunto de entrenamiento elegidos muestra a muestra con reemplazamiento. Gracias a esto, el modelo predictivo final es más robusto ante el sobreajuste, ya que pierde la dependencia excesiva de los modelos al conjunto de entrenamiento.
+
+-   Boosting: se refiere a cualquier método de ensamblaje que combine una serie de aprendices débiles para conformar un modelo predictivo más complejo y potente.
+
+### Random Forest
+
+Es un método de ensamblaje de árboles de decisión entrenado con la metodología bagging. Se basa en la generación de un gran número de árboles en una muestra *bootstrap*.
+
+Consiste en aplicar secuencialmente el siguiente algoritmo,
+
+1.  Tomar $B=500,1000,\ldots$ Desde $b=1$ hasta $B$
+
+    1.  Generar una muestra con reposición del mismo tamaño que la muestra de aprendizaje (muestra bootstrap)
+
+    2.  Construir un árbol $T_b$ en la muestra anterior repitiendo recursivamente los siguientes pasos hasta que cada nodo terminal del árbol alcance un número mínimo $\kappa_0$ de registros:
+
+        1.  Generar una muestra aleatoria simple sin reposición de $\tilde{m}$ variables de las $r$ totales.
+        2.  Seleccionar la mejor variable entre las $\tilde{m}$ escogidas y el corte que minimice la impureza.
+        3.  Ramificar el nodo en sus dos nodos hijos
+
+2.  Para hacer predicciones sobre nuevos puntos x, consideramos la media de las predicciones de los distintos árboles. $$
+    \widehat{f}_{rf}^B=\frac{1}{B}\sum_{b=1}^B{T_b(x)}
+    $$
+
+Se observa que la muestra generada para la construcción de los árboles de regresión de los Bosques Aleatorios se considera con reposición, esto quiere decir que podemos encontramos el mismo registro varias veces y a su vez, registros de la muestra de aprendizaje que no aparezcan en la muestra usada por el árbol. Estos últimos se conocen como registros *fuera de la bolsa* y nos pueden ser útiles como muestra independiente para estimar el error de predicción del bosque $\frac{1}{B}\sum_be(T_b)$, siendo $$
+e(T_b)=\frac{1}{T}\sum_{t=1}^T(y_t-T_b(x_t))^2
+$$
+
+Luego gracias a los registros fuera de bolsa se construye el estimador de error de predicción del bosque $\frac{1}{B}\sum_b\widehat{e(T_b)}$ mediante el estimador del error de predicción de cada árbol, $$
+\widehat{e(T_b)}=\frac{1}{U}\sum_{i=1}^U({y_i}-T_b(x_i))^2
+$$ con $U$ el número de elementos en la muestra fuera de bolsa.
+
+### Gradient Boosting
