@@ -51,7 +51,8 @@ execute:
 # Capítulo 1
 {{< include capitulo01.qmd >}}
 
-<!-- {{< include capitulo02.qmd >}} -->
+# Capítulo 2. Resultados y Evaluación de Modelos
+{{< include capitulo02.qmd >}}
 
 {{< appendix >}}
 

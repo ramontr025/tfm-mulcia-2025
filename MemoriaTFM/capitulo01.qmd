@@ -61,6 +61,14 @@ Y unas curvas ROC y PR:
 Curvas de evaluación del modelo logístico.
 :::
 
+## Selección de características
+
+En el anterior apartado hemos obtenido un rendimiento excelente en el conjunto de test con únicamente 50 variables del dataset original. Es lógico preguntarse, ¿cuántas variables son necesarias para obtener un rendimiento óptimo?. En esta sección se elabora un análisis del rendimiento del modelo aplicando técnicas de cross-validation anidado para obtener una estimación veraz del rendimiento del modelo, teniendo en cuenta tanto el sesgo como la varianza del modelo.
+
+La idea es la siguiente: en lugar de realizar una única partición del conjunto de datos, se emplea una estrategia robusta denominada validación cruzada anidada (*Nested Cross-Validation*). En el bucle externo (`outer_cv`), se evalúa la capacidad de generalización dividiendo el conjunto de entrenamiento en 5 particiones estratificadas. A su vez, para cada una de estas iteraciones, se ejecuta un bucle interno (`inner_cv` con otras 5 particiones) mediante un ajustador paramétrico (`GridSearchCV`) encargado de encontrar los hiperparámetros óptimos. En este espacio de búsqueda se evalúa el rendimiento del *pipeline* iterando sobre el número de características seleccionadas ($k \in \{1, 3, 5, 10, 20, 50\}$) y penalizaciones de regularización matemática ($C$), usando el área bajo la curva exhaustiva (PR-AUC o `average_precision`) como métrica objetivo.
+
+![Rendimiento del modelo según el número de variables seleccionadas](images/nestedCV_num_variables.png){width="60%"}
+
 {{< pagebreak >}}
 
 ## Ingeniería de características médicas

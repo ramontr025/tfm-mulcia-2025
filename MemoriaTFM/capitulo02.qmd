@@ -1,0 +1,33 @@
+En este capítulo se detallan los resultados obtenidos tras el preprocesamiento de los distintos conjuntos de datos (diagnósticos clínicos, procedimientos, histórico de medicamentos y pruebas de laboratorio) y el posterior entrenamiento y evaluación de diversos algoritmos de *Machine Learning*. El objetivo principal de esta fase experimental ha sido encontrar el modelo más preciso y robusto para la predicción de cáncer de pulmón, basándose puramente en indicadores clínicos estructurados.
+
+## Metodología y Búsqueda de Hiperparámetros (Tuning)
+
+Previo a la evaluación final, se ejecutó un proceso sistemático para optimizar los hiperparámetros de diferentes familias de algoritmos y determinar su configuración con mayor capacidad predictiva. Esta validación se realizó aplicando validación cruzada estratificada con 5 particiones (5-Fold Cross-Validation), empleando como métrica de optimización principal el `f1_weighted`. Elegir esta métrica asegura un buen balance penalizando correctamente predicciones desproporcionadas entre clases.
+
+Se evaluaron e iteraron combinaciones para cuatro tipos de modelos:
+
+-   **Random Forest**: Se evaluaron 36 combinaciones ajustando el número de árboles estimadores, la profundidad máxima, el mínimo de muestras para la partición y la selección de características.
+-   **SVM (Máquinas de Vectores de Soporte)**: Se evaluaron 16 combinaciones explorando el parámetro de regularización matemática C, tipos de kernel y su grado.
+-   **XGBoost (Extreme Gradient Boosting)**: Evaluado mediante 432 combinaciones. Las pruebas abarcaron alteraciones sobre la ratio de aprendizaje (*learning rate*), reguladores de penalización L1 (`reg_alpha`) y L2 (`reg_lambda`), profundidad de los árboles y porcentajes de submuestreo.
+-   **MLPClassifier (Red Neuronal Multicapa)**: Dos combinaciones con topología predefinida y variaciones en la tasa de aprendizaje adaptativa.
+
+## Rendimiento en el Conjunto de Test
+
+Con las configuraciones óptimas descubiertas, los modelos fueron entrenados de forma final y desplegados sobre un conjunto de test independiente, un entorno de simulación equivalente a operar con datos clínicos nunca antes vistos por el sistema.
+
+A las las métricas críticas evaluadas (F1-score, Precision y Recall) fueron añadidas nuevas métricas sobre las probabilidades del modelo, como el Área bajo la Curva Operativa del Receptor (ROC-AUC) y el Área Bajo la Curva de Precisión Exhaustiva (PR-AUC).
+
+::: {#tbl-metricas-test}
+| Modelo            | F1-Score | Precision | Recall | ROC-AUC | PR-AUC |
+|:------------------|:--------:|:---------:|:------:|:-------:|:------:|
+| **Random Forest** |  0.8535  |  0.8525   | 0.8558 | 0.9206  | 0.8228 |
+| **XGBoost**       |  0.8526  |  0.8520   | 0.8534 | 0.9235  | 0.8245 |
+| **MLPClassifier** |  0.8494  |  0.8491   | 0.8534 | 0.9330  | 0.8334 |
+| **SVM**           |  0.8325  |  0.8422   | 0.8440 | 0.9125  | 0.8092 |
+
+: "Métricas de evaluación comparativa en conjunto de test (datos no observados)."
+:::
+
+Los resultados confirman que **Random Forest** y **XGBoost** poseen la mayor solidez algorítmica para discriminar diagnósticos bajo la perspectiva conjunta de *F1-Score*, superando ligeramente el umbral del 0.85. Sin embargo, en el apartado probabilístico para separabilidad de rangos estocásticos, la red neuronal densa (**MLPClassifier**) destaca situando el **ROC-AUC** en el rango de 0.9330.
+
+![Comparativa en test de los modelos propuestos PR-AUC y ROC-AUC.](images/comparativa_pr_roc_modelos.png){width="100%"}

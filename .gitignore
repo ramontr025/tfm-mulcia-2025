@@ -8,6 +8,8 @@ data/
 *.CSV
 *.xlsx
 
+mlruns/
+mlartifacts/
 # Entorno y archivos temporales
 .env
 .pixi/
@@ -24,3 +26,7 @@ despliegue_Docker/
 
 # MemoriaTFM
 MemoriaTFM/images/
+
+# Entorno virtual auxiliar 
+venv/
+.venv/
