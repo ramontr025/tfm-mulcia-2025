@@ -70,7 +70,7 @@ def construir_modelo(nombre_modelo):
 
 def buscar_hiperparametros(modelo, X_train, y_train, nombre_modelo, 
                            param_grid=None, cv=5, scoring='f1_weighted', 
-                           n_jobs=-1, verbose=1):
+                           n_jobs=-1, verbose=1, preprocessing_pipeline=None):
     """
     Realiza búsqueda de hiperparámetros mediante GridSearchCV con validación cruzada.
     
@@ -98,6 +98,9 @@ def buscar_hiperparametros(modelo, X_train, y_train, nombre_modelo,
         Número de procesos. -1 usa todos disponibles
     verbose : int (default=1)
         Nivel de detalle de la salida
+    preprocessing_pipeline : Pipeline, opcional
+        Pipeline de preprocesamiento. Si se proporciona, se integra con el modelo
+        en una Pipeline completa para evitar data leakage en CV
     
     Retorna:
     --------
@@ -108,25 +111,41 @@ def buscar_hiperparametros(modelo, X_train, y_train, nombre_modelo,
         - 'grid_search': objeto GridSearchCV completo con todos los resultados
         - 'resultados_cv': DataFrame con todos los resultados de la búsqueda
     """
+    from sklearn.pipeline import Pipeline as SKPipeline
     
     # Usar parámetros de configuración si no se proporcionan
     if param_grid is None:
         if nombre_modelo not in MODELS_HYPERPARAMS:
-            raise ValueError(f"Configuración no encontrada para {nombre_modelo}")
+            raise ValueError(f"Configuración no encontrado para {nombre_modelo}")
         param_grid = MODELS_HYPERPARAMS[nombre_modelo]
+    
+    # Si se proporciona un pipeline de preprocesamiento, integrarlo con el modelo
+    if preprocessing_pipeline is not None:
+        # Crear pipeline completo: preprocesamiento + modelo
+        modelo_completo = SKPipeline([
+            ("preprocesamiento", preprocessing_pipeline),
+            ("modelo", modelo)
+        ])
+        # Adaptar param_grid: agregar prefijo 'modelo__' a todos los parámetros
+        param_grid_adaptado = {f"modelo__{k}": v for k, v in param_grid.items()}
+    else:
+        modelo_completo = modelo
+        param_grid_adaptado = param_grid
     
     print(f"\n{'='*70}")
     print(f"Búsqueda de hiperparámetros para: {nombre_modelo}")
+    if preprocessing_pipeline is not None:
+        print(f"✓ Con pipeline de preprocesamiento integrado")
     print(f"{'='*70}")
     print(f"Métrica de evaluación: {scoring}")
     print(f"Validación cruzada: {cv}-fold")
-    print(f"Número de combinaciones de parámetros: {_calcular_combinaciones(param_grid)}")
+    print(f"Número de combinaciones de parámetros: {_calcular_combinaciones(param_grid_adaptado)}")
     print(f"{'='*70}\n")
     
     # Crear GridSearchCV
     grid_search = GridSearchCV(
-        estimator=modelo,
-        param_grid=param_grid,
+        estimator=modelo_completo,
+        param_grid=param_grid_adaptado,
         cv=cv,
         scoring=scoring,
         n_jobs=n_jobs,
@@ -163,7 +182,7 @@ def buscar_hiperparametros(modelo, X_train, y_train, nombre_modelo,
 
 
 def tunear_multiples_modelos(modelos, X_train, y_train, scoring='f1_weighted', 
-                             cv=2, n_jobs=-1, verbose=1):
+                             cv=5, n_jobs=-1, verbose=1, preprocessing_pipeline=None):
     """
     Tunea múltiples modelos usando la configuración centralizada.
     
@@ -173,7 +192,7 @@ def tunear_multiples_modelos(modelos, X_train, y_train, scoring='f1_weighted',
         Lista de nombres de modelos: ['RandomForest', 'XGBoost', 'MLPClassifier', 'EBM', 'NaiveBayes', 'SVM']
         O diccionario {nombre_modelo: param_grid_personalizado}
     X_train : array-like
-        Características de entrenamiento
+        Características de entrenamiento (datos crudos si usa preprocessing_pipeline)
     y_train : array-like
         Variables objetivo de entrenamiento
     scoring : str (default='f1_weighted')
@@ -184,10 +203,26 @@ def tunear_multiples_modelos(modelos, X_train, y_train, scoring='f1_weighted',
         Número de procesos
     verbose : int (default=1)
         Nivel de detalle
+    preprocessing_pipeline : Pipeline, opcional
+        Pipeline de preprocesamiento. Si se proporciona, se integra con cada modelo
+        para evitar data leakage en validación cruzada
     
     Retorna:
     --------
     dict : con los resultados de cada modelo
+        Ejemplo de uso:
+        
+        resultados = tunear_multiples_modelos(
+            modelos=['RandomForest', 'SVM', 'XGBoost'],
+            X_train=X_train_sin_procesar,
+            y_train=y_train,
+            preprocessing_pipeline=mi_pipeline_preprocesamiento,
+            cv=5,
+            scoring='f1_weighted'
+        )
+        
+        mejor_modelo = resultados['RandomForest']['mejor_modelo']
+        mejor_modelo.predict(X_test_sin_procesar)  # El pipeline está incluido
     """
     
     resultados = {}
@@ -210,7 +245,8 @@ def tunear_multiples_modelos(modelos, X_train, y_train, scoring='f1_weighted',
                 cv=cv,
                 scoring=scoring,
                 n_jobs=n_jobs,
-                verbose=verbose
+                verbose=verbose,
+                preprocessing_pipeline=preprocessing_pipeline  # NUEVO
             )
         except Exception as e:
             print(f"\n✗ Error al tunear {nombre_modelo}: {str(e)}")

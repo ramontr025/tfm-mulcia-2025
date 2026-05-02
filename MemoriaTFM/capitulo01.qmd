@@ -119,6 +119,13 @@ En este punto, se realiza el reconocimiento de los códigos SNOMED de las variab
 
 -   El resto es una mezcla de variables sociodemográficas, situaciones sociales o atributos relevantes no incluidos en los grupos anteriores. Este grupo aporta 14 variables.
 
+#### Referencias cruzadas con nomenclatura CIE-10 diagnósticos
+
+La Clasificación Internacional de Enfermedades (CIE) es un sistema de codificación desarrollado por la Organización Mundial de la Salud (OMS) para clasificar enfermedades y otros problemas relacionados con la salud [@cie10]. Este sistema se utiliza ampliamente en todo el mundo para la codificación de diagnósticos médicos, lo que facilita la comunicación entre profesionales de la salud y la recopilación de datos epidemiológicos.
+
+El repositorio oficial de SNOMED CT ofrece también un mapeo de sus conceptos a CIE-10, lo que nos permite realizar una referencia cruzada entre ambas nomenclaturas. La relación no es biyectiva, de manera que podremos perder conceptos específicos de SNOMED, pero a cambio ganaremos en interpretabilidad y una reducción de variables que puede ser beneficiosa para el análisis estadístico.
+
+
 ### Medicamentos
 
 Originalmente aparecen codificados en RxNorm. Desarrollado por la Biblioteca Nacional de Medicina de EE. UU. (NLM), esta es una nomenclatura terminológica que normaliza los nombres de los medicamentos clínicos y presentan una granularidad profunda (una variable por principio activo). [@rxnorm]

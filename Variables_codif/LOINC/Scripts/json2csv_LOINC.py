@@ -1,12 +1,13 @@
 import pandas as pd
 import json
+import argparse
 
-# Rutas a los ficheros
-ruta_json = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\Variables_codif\LOINC\res_laboratorio.json"
-ruta_dataset = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\data\synthea_30k.csv"
-ruta_output = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\data\synthea_30k_loinc_solo_seleccionadas.csv"
+# Rutas a los ficheros (valores por defecto)
+ruta_json = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\Variables_codif\LOINC\sel_laboratorio.json"
+ruta_dataset_default = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\data\synthea_30k.csv"
+ruta_output_default = r"c:\Users\rtrin\OneDrive\Escritorio\FORMACION\MASTER\TFM\tfm-mulcia-2025\tfm-mulcia-2025\data\synthea_30k_loinc_solo_seleccionadas.csv"
 
-def extraer_variables():
+def extraer_variables(ruta_dataset,ruta_output):
     # 1. Cargar el JSON (Mapeo de Nombre -> Codigo)
     with open(ruta_json, 'r', encoding='utf-8') as f:
         mapeo = json.load(f)
@@ -40,4 +41,19 @@ def extraer_variables():
     print(f"Dimensiones finales: {df_filtrado.shape}")
 
 if __name__ == "__main__":
-    extraer_variables()
+    parser = argparse.ArgumentParser(description="Extrae variables LOINC del dataset")
+    parser.add_argument(
+        "--dataset", 
+        type=str, 
+        default=ruta_dataset_default,
+        help=f"Ruta al archivo CSV del dataset (por defecto: {ruta_dataset_default})"
+    )
+    parser.add_argument(
+        "--output", 
+        type=str, 
+        default=ruta_output_default,
+        help=f"Ruta al archivo CSV de salida (por defecto: {ruta_output_default})"
+    )
+    args = parser.parse_args()
+    
+    extraer_variables(args.dataset, args.output)

@@ -19,12 +19,12 @@ RANDOM_FOREST_PARAMS = {
 # ============================================================================
 XGBOOST_PARAMS = {
     'n_estimators': [100],
-    'max_depth': [3, 5, 7, 9],
-    'learning_rate': [0.01, 0.1],
-    'subsample': [0.7 , 1.0],
-    'colsample_bytree': [0.7, 0.8, 0.9],
-    'reg_lambda': [0.1, 1, 10],
-    'reg_alpha': [0, 0.1, 1],
+    'max_depth': [3, 7],
+    'learning_rate': [0.01],
+    'subsample': [ 1.0],
+    'colsample_bytree': [0.7, 0.8],
+    'reg_lambda': [0.1, 1],
+    'reg_alpha': [0, 0.1],
 }
 
 # ============================================================================

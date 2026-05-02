@@ -1,0 +1,526 @@
+{
+    "A41.0": {
+        "448417001": "Sepsis caused by Staphylococcus aureus"
+    },
+    "A41.5": {
+        "448813005": "Sepsis caused by Pseudomonas (disorder)"
+    },
+    "A41.9": {
+        "91302008": "Sepsis (disorder)"
+    },
+    "A49.0": {
+        "406602003": "Infection caused by Staphylococcus aureus"
+    },
+    "A49.9": {
+        "87628006": "Bacterial infectious disease (disorder)"
+    },
+    "B34.9": {
+        "770349000": "Sepsis caused by virus (disorder)"
+    },
+    "B96.2": {
+        "301011002": "Escherichia coli urinary tract infection"
+    },
+    "C18.8": {
+        "109838007": "Overlapping malignant neoplasm of colon"
+    },
+    "C18.9": {
+        "363406005": "Malignant tumor of colon",
+        "93761005": "Primary malignant neoplasm of colon"
+    },
+    "C50.9": {
+        "254837009": "Malignant neoplasm of breast (disorder)",
+        "417181009": "Estrogen+Progesterone receptor Ag [Presence] in Tissue by Immune stain"
+    },
+    "C78.5": {
+        "94260004": "Secondary malignant neoplasm of colon"
+    },
+    "D07.5": {
+        "92691004": "Carcinoma in situ of prostate (disorder)"
+    },
+    "D40.0": {
+        "126906006": "Neoplasm of prostate"
+    },
+    "D64.9": {
+        "271737000": "Anemia (disorder)"
+    },
+    "D68.9": {
+        "234466008": "Acquired coagulation disorder (disorder)"
+    },
+    "E03.9": {
+        "83664006": "Idiopathic atrophic hypothyroidism"
+    },
+    "E11.2": {
+        "90781000119102": "Microalbuminuria due to type 2 diabetes mellitus (disorder)",
+        "157141000119108": "Proteinuria due to type 2 diabetes mellitus (disorder)"
+    },
+    "E11.3": {
+        "422034002": "Diabetic retinopathy associated with type II diabetes mellitus (disorder)",
+        "1501000119109": "Proliferative diabetic retinopathy due to type II diabetes mellitus (disorder)",
+        "1551000119108": "Nonproliferative diabetic retinopathy due to type 2 diabetes mellitus (disorder)",
+        "97331000119101": "Macular edema and retinopathy due to type 2 diabetes mellitus (disorder)",
+        "60951000119105": "Blindness due to type 2 diabetes mellitus (disorder)"
+    },
+    "E11.4": {
+        "368581000119106": "Neuropathy due to type 2 diabetes mellitus (disorder)"
+    },
+    "E11.9": {
+        "44054006": "Diabetes"
+    },
+    "E13.9": {
+        "427089005": "Diabetes from Cystic Fibrosis"
+    },
+    "E14.2": {
+        "127013003": "Diabetic renal disease (disorder)"
+    },
+    "E66.8": {
+        "408512008": "Body mass index 40+ - severely obese (finding)"
+    },
+    "E66.9": {
+        "162864005": "Body mass index 30+ - obesity (finding)"
+    },
+    "E78.1": {
+        "302870006": "Hypertriglyceridemia (disorder)"
+    },
+    "E78.5": {
+        "55822004": "Hyperlipidemia"
+    },
+    "E84.8": {
+        "427089005": "Diabetes from Cystic Fibrosis",
+        "707418001": "Male infertility due to cystic fibrosis (disorder)"
+    },
+    "E84.9": {
+        "190905008": "Cystic Fibrosis"
+    },
+    "E88.8": {
+        "237602007": "Metabolic syndrome X (disorder)"
+    },
+    "F00.0": {
+        "230265002": "Familial Alzheimer's disease of early onset (disorder)"
+    },
+    "F10.2": {
+        "7200002": "Alcoholism"
+    },
+    "F11.1": {
+        "5602001": "Opioid abuse (disorder)"
+    },
+    "F19.1": {
+        "361055000": "Misuses drugs (finding)"
+    },
+    "F41.0": {
+        "80583007": "Severe anxiety (panic) (finding"
+    },
+    "F43.1": {
+        "47505003": "Posttraumatic stress disorder"
+    },
+    "G30.0": {
+        "230265002": "Familial Alzheimer's disease of early onset (disorder)"
+    },
+    "G30.9": {
+        "26929004": "Alzheimer's disease (disorder)"
+    },
+    "G40.9": {
+        "84757009": "Epilepsy"
+    },
+    "G43.0": {
+        "124171000119105": "Chronic intractable migraine without aura"
+    },
+    "G43.9": {
+        "427419006": "Transformed migraine (disorder)"
+    },
+    "G63.2": {
+        "368581000119106": "Neuropathy due to type 2 diabetes mellitus (disorder)"
+    },
+    "G83.8": {
+        "698754002": "Chronic paralysis due to lesion of spinal cord"
+    },
+    "G95.9": {
+        "698754002": "Chronic paralysis due to lesion of spinal cord"
+    },
+    "H11.4": {
+        "246677007": "Passive conjunctival congestion (finding)"
+    },
+    "H36.0": {
+        "422034002": "Diabetic retinopathy associated with type II diabetes mellitus (disorder)",
+        "1501000119109": "Proliferative diabetic retinopathy due to type II diabetes mellitus (disorder)",
+        "1551000119108": "Nonproliferative diabetic retinopathy due to type 2 diabetes mellitus (disorder)",
+        "97331000119101": "Macular edema and retinopathy due to type 2 diabetes mellitus (disorder)"
+    },
+    "H54.0": {
+        "60951000119105": "Blindness due to type 2 diabetes mellitus (disorder)"
+    },
+    "H66.9": {
+        "65363002": "Otitis media"
+    },
+    "I10": {
+        "59621000": "Hypertension"
+    },
+    "I21.9": {
+        "22298006": "Myocardial Infarction"
+    },
+    "I25.1": {
+        "53741008": "Coronary Heart Disease"
+    },
+    "I25.2": {
+        "399211009": "History of myocardial infarction (situation)"
+    },
+    "I26.9": {
+        "706870000": "Acute pulmonary embolism (disorder)"
+    },
+    "I46.9": {
+        "410429000": "Cardiac Arrest"
+    },
+    "I48.9": {
+        "49436004": "Atrial Fibrillation"
+    },
+    "I50.0": {
+        "88805009": "Chronic congestive heart failure (disorder)"
+    },
+    "I50.9": {
+        "84114007": "Heart failure (disorder)"
+    },
+    "I64": {
+        "230690007": "Stroke"
+    },
+    "I80.2": {
+        "132281000119108": "Acute deep venous thrombosis (disorder)"
+    },
+    "J01.9": {
+        "444814009": "Viral sinusitis (disorder)",
+        "75498004": "Acute bacterial sinusitis (disorder)"
+    },
+    "J02.0": {
+        "43878008": "Streptococcal sore throat (disorder)"
+    },
+    "J02.8": {
+        "195662009": "Acute viral pharyngitis (disorder)"
+    },
+    "J18.9": {
+        "233604007": "Pneumonia (disorder)"
+    },
+    "J20.9": {
+        "10509002": "Acute bronchitis (disorder)"
+    },
+    "J31.2": {
+        "267102003": "Sore throat symptom (finding)"
+    },
+    "J32.9": {
+        "40055000": "Chronic sinusitis (disorder)",
+        "36971009": "Sinusitis (disorder)"
+    },
+    "J34.8": {
+        "68235000": "Nasal congestion (finding)"
+    },
+    "J43.9": {
+        "87433001": "Pulmonary emphysema (disorder)"
+    },
+    "J44.8": {
+        "185086009": "Chronic obstructive bronchitis (disorder)"
+    },
+    "J45.9": {
+        "195967001": "Asthma"
+    },
+    "J80": {
+        "67782005": "Acute respiratory distress syndrome (disorder)"
+    },
+    "J96.09": {
+        "65710008": "Oxygen Therapy"
+    },
+    "K01.1": {
+        "196416002": "Impacted molars"
+    },
+    "K62.1": {
+        "713197008": "Recurrent rectal polyp"
+    },
+    "K62.5": {
+        "6072007": "Bleeding from anus"
+    },
+    "K63.5": {
+        "68496003": "Polyp of colon"
+    },
+    "K80.2": {
+        "235919008": "Cholelithiasis"
+    },
+    "K81.0": {
+        "65275009": "Acute Cholecystitis"
+    },
+    "L25.9": {
+        "40275004": "Contact dermatitis"
+    },
+    "L93.0": {
+        "200936003": "Lupus erythematosus"
+    },
+    "M06.99": {
+        "69896004": "Rheumatoid arthritis"
+    },
+    "M10.99": {
+        "90560007": "Gout"
+    },
+    "M16.9": {
+        "239872002": "Osteoarthritis of hip"
+    },
+    "M17.9": {
+        "239873007": "Osteoarthritis of knee"
+    },
+    "M19.04": {
+        "201834006": "Localized  primary osteoarthritis of the hand"
+    },
+    "M25.59": {
+        "57676002": "Joint pain (finding)"
+    },
+    "M54.2": {
+        "1121000119107": "Chronic neck pain (finding)"
+    },
+    "M54.5": {
+        "278860009": "Chronic low back pain (finding)"
+    },
+    "M79.19": {
+        "68962001": "Muscle pain (finding)"
+    },
+    "M79.79": {
+        "203082005": "Fibromyalgia (disorder)",
+        "95417003": "Primary fibromyalgia syndrome"
+    },
+    "M80.99": {
+        "443165006": "Pathological fracture due to osteoporosis (disorder)"
+    },
+    "M81.99": {
+        "64859006": "Osteoporosis (disorder)"
+    },
+    "N08.3": {
+        "127013003": "Diabetic renal disease (disorder)",
+        "90781000119102": "Microalbuminuria due to type 2 diabetes mellitus (disorder)",
+        "157141000119108": "Proteinuria due to type 2 diabetes mellitus (disorder)"
+    },
+    "N12": {
+        "45816000": "Pyelonephritis"
+    },
+    "N18.1": {
+        "431855005": "Chronic kidney disease stage 1 (disorder)"
+    },
+    "N18.2": {
+        "431856006": "Chronic kidney disease stage 2 (disorder)"
+    },
+    "N18.3": {
+        "433144002": "Chronic kidney disease stage 3 (disorder)"
+    },
+    "N30.9": {
+        "38822007": "Cystitis"
+    },
+    "N39.0": {
+        "301011002": "Escherichia coli urinary tract infection",
+        "197927001": "Recurrent urinary tract infection"
+    },
+    "N46": {
+        "707418001": "Male infertility due to cystic fibrosis (disorder)"
+    },
+    "O00.1": {
+        "79586000": "Tubal pregnancy"
+    },
+    "O02.0": {
+        "35999006": "Blighted ovum"
+    },
+    "O03.9": {
+        "156073000": "Fetus with unknown complication",
+        "19169002": "Miscarriage in first trimester"
+    },
+    "O14.9": {
+        "398254007": "Preeclampsia"
+    },
+    "O15.0": {
+        "198992004": "Antepartum eclampsia"
+    },
+    "R04.2": {
+        "66857006": "Hemoptysis (finding)"
+    },
+    "R05": {
+        "49727002": "Cough (finding)"
+    },
+    "R06.0": {
+        "267036007": "Dyspnea (finding)",
+        "271825005": "Respiratory distress (finding)"
+    },
+    "R06.2": {
+        "56018004": "Wheezing (finding)"
+    },
+    "R09.0": {
+        "389087006": "Hypoxemia (disorder)"
+    },
+    "R11": {
+        "249497008": "Vomiting symptom (finding)",
+        "422587007": "Nausea (finding)"
+    },
+    "R19.8": {
+        "236077008": "Protracted diarrhea",
+        "267060006": "Diarrhea symptom (finding)"
+    },
+    "R43.2": {
+        "36955009": "Loss of taste (finding)"
+    },
+    "R50.9": {
+        "386661006": "Fever (finding)"
+    },
+    "R51": {
+        "25064002": "Headache (finding)"
+    },
+    "R52.2": {
+        "82423001": "Chronic pain"
+    },
+    "R53": {
+        "84229001": "Fatigue (finding)"
+    },
+    "R56.8": {
+        "128613002": "Seizure disorder"
+    },
+    "R57.2": {
+        "76571007": "Septic shock (disorder)"
+    },
+    "R57.9": {
+        "27942005": "Shock (disorder)"
+    },
+    "R68.8": {
+        "43724002": "Chill (finding)"
+    },
+    "R73.9": {
+        "80394007": "Hyperglycemia (disorder)"
+    },
+    "S01.8": {
+        "370247008": "Facial laceration"
+    },
+    "S06.00": {
+        "62106007": "Concussion with no loss of consciousness",
+        "62564004": "Concussion with loss of consciousness",
+        "110030002": "Concussion injury of brain"
+    },
+    "S13.4": {
+        "39848009": "Whiplash injury to neck"
+    },
+    "S22.30": {
+        "33737001": "Fracture of rib"
+    },
+    "S26.90": {
+        "86175003": "Injury of heart (disorder)"
+    },
+    "S37.00": {
+        "40095003": "Injury of kidney (disorder)"
+    },
+    "S42.00": {
+        "58150001": "Fracture of clavicle"
+    },
+    "S46.0": {
+        "307731004": "Injury of tendon of the rotator cuff of shoulder"
+    },
+    "S51.9": {
+        "283371005": "Laceration of forearm"
+    },
+    "S52.90": {
+        "65966004": "Fracture of forearm"
+    },
+    "S61.9": {
+        "284549007": "Laceration of hand"
+    },
+    "S62.80": {
+        "263102004": "Fracture subluxation of wrist"
+    },
+    "S63.5": {
+        "70704007": "Sprain of wrist"
+    },
+    "S71.1": {
+        "283385000": "Laceration of thigh"
+    },
+    "S72.00": {
+        "359817006": "Closed fracture of hip"
+    },
+    "S76.1": {
+        "30832001": "Rupture of patellar tendon"
+    },
+    "S82.80": {
+        "16114001": "Fracture of ankle"
+    },
+    "S83.2": {
+        "239720000": "Tear of meniscus of knee"
+    },
+    "S89.8": {
+        "444448004": "Injury of medial collateral ligament of knee",
+        "444470001": "Injury of anterior cruciate ligament"
+    },
+    "S91.3": {
+        "284551006": "Laceration of foot"
+    },
+    "S93.4": {
+        "44465007": "Sprain of ankle"
+    },
+    "T08.X0": {
+        "15724005": "Fracture of vertebral column without spinal cord injury",
+        "1734006": "Fracture of the vertebral column with spinal cord injury"
+    },
+    "T09.3": {
+        "1734006": "Fracture of the vertebral column with spinal cord injury"
+    },
+    "T14.1": {
+        "262574004": "Bullet wound"
+    },
+    "T30.1": {
+        "403190006": "First degree burn"
+    },
+    "T30.2": {
+        "403191005": "Second degree burn"
+    },
+    "T30.3": {
+        "403192003": "Third degree burn"
+    },
+    "T65.9": {
+        "86849004": "Suicidal deliberate poisoning"
+    },
+    "T74.9": {
+        "706893006": "Victim of intimate partner abuse (finding)"
+    },
+    "U07.1": {
+        "840539006": "COVID-19"
+    },
+    "W34": {
+        "262574004": "Bullet wound"
+    },
+    "X69": {
+        "86849004": "Suicidal deliberate poisoning"
+    },
+    "X70": {
+        "287182007": "Attempted suicide - suffocation"
+    },
+    "X78": {
+        "287185009": "Attempted suicide - cut/stab"
+    },
+    "Z35.9": {
+        "47200007": "Non-low risk pregnancy"
+    },
+    "Z59.0": {
+        "32911000": "Homeless (finding)",
+        "160701002": "Social migrant (finding)"
+    },
+    "Z60.4": {
+        "422650009": "Social isolation (finding)"
+    },
+    "Z65.5": {
+        "424393004": "Reports of violence in the environment (finding)"
+    },
+    "Z72.0": {
+        "449868002": "Smokes tobacco daily"
+    },
+    "Z73.3": {
+        "73595000": "Stress (finding)"
+    },
+    "Z86.7": {
+        "429007001": "History of cardiac arrest (situation)"
+    },
+    "Z89.1": {
+        "698423002": "History of disarticulation at wrist (situation)"
+    },
+    "Z89.2": {
+        "161621004": "History of upper limb amputation (situation)"
+    },
+    "Z89.4": {
+        "429280009": "History of amputation of foot (situation)"
+    },
+    "Z89.6": {
+        "161622006": "History of lower limb amputation (situation)"
+    }
+}
