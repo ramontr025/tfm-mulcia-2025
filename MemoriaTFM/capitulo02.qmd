@@ -104,3 +104,9 @@ A las las métricas críticas evaluadas (F1-score, Precision y Recall) fueron a�
 :::
 
 ![Curvas PR-AUC y ROC-AUC del modelo con variables de CIE-10.](images/pr_roc_modelo_cie.png){width="100%"}
+
+## Evaluación del modelo en nuevas cohortes
+
+Usaremos el modelo con resultados más realistas (modelo con variables de laboratorio) para evaluar su rendimiento en nuevas cohortes de pacientes, sin necesidad de reentrenar el modelo. Para ello, se han cargado nuevos conjuntos de datos de pacientes con cáncer de pulmón y sin cáncer de pulmón, y se han aplicado los mismos preprocesamientos que se realizaron en el conjunto de entrenamiento.
+
+![Evaluación del modelo de solo analíticas en nuevas cohortes.](images/evaluacion_nuevas_cohortes.png){width="100%"}
