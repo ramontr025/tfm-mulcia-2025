@@ -11,7 +11,7 @@ date: today
 date-format: full
 bibliography: referencias.bib
 format:
-  memoriatfetypst-typst: 
+  memoriatfetypst-typst:
     toc: true
     #bibliographystyle: apa
     #bibliographystyle: chicago-author-date
@@ -35,6 +35,8 @@ format:
     # margin: {x: 2cm, y: 2cm}
     toccapitulos: false
     bibliografia-completa: false
+    header-includes: |
+      #let tanh = math.op("tanh")
   html:
     toc: true
     toc-title: "Tabla de Contenidos"
@@ -48,17 +50,41 @@ execute:
   message: false
 ---
 
-# Capítulo 1
-{{< include capitulo01.qmd >}}
+# Introducción
+{{< include introduccion.qmd >}}
 
-# Capítulo 2. Resultados y Evaluación de Modelos
-{{< include capitulo02.qmd >}}
+# Contexto y motivación
+{{< include contexto.qmd >}}
+
+# Presentación de los datos
+{{< include datos.qmd >}}
+
+# Análisis exploratorio de las secuencias
+{{< include exploratorio.qmd >}}
+
+# Redes neuronales recurrentes: LSTM, GRU y GRU-D
+{{< include teoria.qmd >}}
+
+# Aplicación del modelo GRU-D
+{{< include aplicacion.qmd >}}
+
+# Evaluación de resultados
+{{< include evaluacion.qmd >}}
+
+# Conclusiones
+{{< include conclusiones.qmd >}}
 
 {{< appendix >}}
 
-# Apéndice A
+# Apéndice A. Modelo predictivo estático
+{{< include capitulo01.qmd >}}
 
-## Atributos reveladores de cáncer de pulmón
+# Apéndice B. Resultados y evaluación del modelo estático
+{{< include capitulo02.qmd >}}
+
+# Apéndice C. Atributos reveladores de cáncer de pulmón
+
+## Variables eliminadas por riesgo de data leakage
 
 ::: {#tbl-reveladoras-cancer}
 | Código | Descripción |

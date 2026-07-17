@@ -1,6 +1,6 @@
 [workspace]
 authors = ["Ramón <rtrinidadac25@gmail.com>"]
-channels = ["conda-forge"]
+channels = ["conda-forge", "bioconda"]
 name = "tfm-mulcia-2025"
 platforms = ["win-64"]
 version = "0.1.0"
@@ -21,6 +21,7 @@ plotly = ">=6.5.2,<7"
 statsmodels = ">=0.14.6,<0.15"
 xgboost = ">=3.2.0,<4"
 interpret = ">=0.7.6,<0.8"
+snakemake = ">=9.21.0,<10"
 
 [pypi-dependencies]
 gower = ">=0.1.2, <0.2"

@@ -8,6 +8,9 @@ data/
 *.CSV
 *.xlsx
 
+.opencode/
+.agent/
+
 mlruns/
 mlartifacts/
 # Entorno y archivos temporales

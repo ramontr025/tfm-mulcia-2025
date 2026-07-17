@@ -1,0 +1,3 @@
+::: {#todo-aplicacion}
+**TODO.** Contenido pendiente de redactar.
+:::

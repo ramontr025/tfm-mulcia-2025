@@ -1,0 +1,283 @@
+## Introducción al procesamiento secuencial
+
+El modelado de datos secuenciales constituye un ámbito diferenciado del aprendizaje profundo. Mientras las redes *feedforward* asumen que las observaciones son independientes e idénticamente distribuidas, en numerosos dominios —lenguaje natural, audio, señales fisiológicas o *EHR* longitudinales— las observaciones presentan dependencias temporales cuya explotación resulta imprescindible. Las **redes neuronales recurrentes** (RNN) constituyen el formalismo neuronal básico para procesar secuencias de longitud variable.
+
+En lo sucesivo, $\mathbf{x} = (\mathbf{x}_1, \mathbf{x}_2, \dots, \mathbf{x}_T)$ denota una secuencia de longitud variable, con $\mathbf{x}_t \in \mathbb{R}^{d_x}$ el vector de entrada en el instante $t$. El estado oculto recurrente se denota $\mathbf{h}_t \in \mathbb{R}^{d_h}$, donde $d_h$ representa la dimensionalidad de la memoria interna de la red. Una síntesis comparativa de las cuatro arquitecturas abordadas en este capítulo se ofrece en la @tbl-comparativa-rnn.
+
+## Redes Neuronales Recurrentes básicas
+
+### Concepto general
+
+Las RNN extienden las redes *feedforward* mediante un **bucle de retroalimentación** que materializa una memoria interna $\mathbf{h}_t$. La activación del estado oculto en cada instante depende tanto de la entrada actual $\mathbf{x}_t$ como del estado oculto previo $\mathbf{h}_{t-1}$, tal como se esquematiza en la @fig-rnn.
+
+![Celda RNN básica: el estado oculto se obtiene como una transformación afín de la entrada y del estado anterior, seguida de una activación tangente hiperbólica.](images/fig-rnn.png){#fig-rnn width="20%"}
+
+### Ecuaciones de la celda
+
+Para cada paso de tiempo $t$:
+
+$$
+\mathbf{h}_t = \tanh\left(\mathbf{W}_h \mathbf{x}_t + \mathbf{U}_h \mathbf{h}_{t-1} + \mathbf{b}_h\right)
+$$
+
+donde $\mathbf{W}_h \in \mathbb{R}^{d_h \times d_x}$ es la matriz de pesos de entrada, $\mathbf{U}_h \in \mathbb{R}^{d_h \times d_h}$ la matriz recurrente, $\mathbf{b}_h \in \mathbb{R}^{d_h}$ el sesgo y $\tanh$ la activación que acota el estado oculto al intervalo $[-1, 1]$.
+
+### Parámetros entrenables
+
+$$
+\text{Total (RNN)} = d_h \, d_x + d_h \, d_h + d_h = d_h\,(d_x + d_h + 1)
+$$
+
+### Limitación: desvanecimiento del gradiente
+
+El principal inconveniente de las RNN básicas reside en su memoria a corto plazo, motivada por los problemas de **desvanecimiento** y **explosión del gradiente**. Si se ignora la entrada y el sesgo con fines analíticos, la relación anidada de los estados ocultos se expresa como:
+
+$$
+\mathbf{h}_T = \tanh\left(\mathbf{U}_h \tanh\left(\mathbf{U}_h \dots \tanh\left(\mathbf{U}_h \mathbf{h}_0\right)\right)\right)
+$$
+
+Al derivar la pérdida final respecto a $\mathbf{h}_0$ mediante *Backpropagation Through Time* (BPTT), se multiplican reiteradamente los pesos recurrentes $\mathbf{U}_h$ y las derivadas de $\tanh$. Dado que $\tanh'(z) \in [0, 1]$ y, en la mayor parte de su dominio, estrictamente menor que 1, y siendo los autovalores de $\mathbf{U}_h$ típicamente menores que la unidad, el gradiente decrece de forma exponencial con $T$. Consecuentemente, la influencia del estado inicial $\mathbf{h}_0$ se extingue al alcanzar la predicción, de modo que las RNN básicas solo operan de manera fiable en secuencias cortas.
+
+## Redes LSTM (*Long Short-Term Memory*)
+
+### Concepto general
+
+Las redes LSTM, propuestas por Hochreiter y Schmidhuber en 1997, resuelven las limitaciones anteriores introduciendo una memoria tanto de corto como de largo plazo. La celda incorpora un **estado de celda** $\mathbf{C}_t$ que actúa como *banda transportadora*: la información fluye a lo largo de ella sufriendo únicamente transformaciones lineales menores, lo que evita que el gradiente se desvanezca durante la retropropagación temporal. La adición y eliminación de información se regula mediante **compuertas** sigmoidales, acotadas al intervalo $[0, 1]$, que actúan como válvulas. La @fig-lstm esquematiza el flujo de información en la celda.
+
+![Celda LSTM: las compuertas de olvido, entrada y salida regulan la actualización del estado de celda C_t y, a partir de él, del estado oculto h_t.](images/fig-lstm.png){#fig-lstm width="45%"}
+
+### Compuertas y ecuaciones
+
+Las compuertas aplican una transformación lineal seguida de una activación sigmoide $\sigma$, de rango $[0, 1]$, donde 0 bloquea el paso de información y 1 lo permite por completo.
+
+**Compuerta de olvido** ($\mathbf{f}_t$), decide qué descartar del estado anterior:
+
+$$
+\mathbf{f}_t = \sigma\left(\mathbf{W}_f \mathbf{x}_t + \mathbf{U}_f \mathbf{h}_{t-1} + \mathbf{b}_f\right)
+$$
+
+**Compuerta de entrada** ($\mathbf{i}_t$), regula qué nueva información se almacena:
+
+$$
+\mathbf{i}_t = \sigma\left(\mathbf{W}_i \mathbf{x}_t + \mathbf{U}_i \mathbf{h}_{t-1} + \mathbf{b}_i\right)
+$$
+
+**Estado candidato** ($\tilde{\mathbf{C}}_t$), propone nuevos valores bajo activación $\tanh$:
+
+$$
+\tilde{\mathbf{C}}_t = \tanh\left(\mathbf{W}_c \mathbf{x}_t + \mathbf{U}_c \mathbf{h}_{t-1} + \mathbf{b}_c\right)
+$$
+
+**Actualización del estado de celda** ($\mathbf{C}_t$), donde $\odot$ denota el producto de Hadamard:
+
+$$
+\mathbf{C}_t = \mathbf{f}_t \odot \mathbf{C}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{C}}_t
+$$
+
+**Compuerta de salida** ($\mathbf{o}_t$):
+
+$$
+\mathbf{o}_t = \sigma\left(\mathbf{W}_o \mathbf{x}_t + \mathbf{U}_o \mathbf{h}_{t-1} + \mathbf{b}_o\right)
+$$
+
+**Nuevo estado oculto** ($\mathbf{h}_t$):
+
+$$
+\mathbf{h}_t = \mathbf{o}_t \odot \tanh(\mathbf{C}_t)
+$$
+
+### Parámetros entrenables
+
+La celda dispone de cuatro componentes internos homólogos (tres compuertas y un generador de candidatos), cada uno con pesos de entrada, recurrentes y sesgos:
+
+$$
+\text{Total (LSTM)} = 4 \,(d_h \, d_x + d_h \, d_h + d_h) = 4\, d_h\,(d_x + d_h + 1)
+$$
+
+## Redes GRU (*Gated Recurrent Unit*)
+
+### Concepto general
+
+La arquitectura GRU, propuesta por Cho et al. en 2014, constituye una variante simplificada y altamente eficiente de la LSTM. Su rasgo de diseño más distintivo reside en suprimir el **estado de celda separado** $\mathbf{C}_t$: el estado oculto $\mathbf{h}_t$ asume directamente el papel de memoria única. Para ello, fusiona las compuertas de olvido y de entrada en una única **compuerta de actualización** $\mathbf{z}_t$ y regula la influencia del estado previo mediante una **compuerta de reinicio** $\mathbf{r}_t$. Ello reduce el número de parámetros entrenables, acelera el cómputo y mitiga el riesgo de sobreajuste, manteniendo una capacidad de memoria comparable a la LSTM. El esquema de la celda se recoge en la @fig-gru.
+
+![Celda GRU: puerta de actualización z_t y puerta de reinicio r_t que gobiernan el estado oculto candidato y su interpolación con el estado previo.](images/fig-gru.png){#fig-gru width="40%"}
+
+### Ecuaciones de la celda GRU
+
+**Compuerta de actualización** ($\mathbf{z}_t$), que determina la fracción del estado previo transmitida al futuro:
+
+$$
+\mathbf{z}_t = \sigma\left(\mathbf{W}_z \mathbf{x}_t + \mathbf{U}_z \mathbf{h}_{t-1} + \mathbf{b}_z\right)
+$$
+
+**Compuerta de reinicio** ($\mathbf{r}_t$), que controla qué parte del pasado se olvida antes de generar la nueva propuesta:
+
+$$
+\mathbf{r}_t = \sigma\left(\mathbf{W}_r \mathbf{x}_t + \mathbf{U}_r \mathbf{h}_{t-1} + \mathbf{b}_r\right)
+$$
+
+**Estado oculto candidato** ($\tilde{\mathbf{h}}_t$):
+
+$$
+\tilde{\mathbf{h}}_t = \tanh\left(\mathbf{W}_h \mathbf{x}_t + \mathbf{U}_h (\mathbf{r}_t \odot \mathbf{h}_{t-1}) + \mathbf{b}_h\right)
+$$
+
+**Actualización del estado oculto** ($\mathbf{h}_t$), mediante interpolación lineal entre $\mathbf{h}_{t-1}$ y $\tilde{\mathbf{h}}_t$:
+
+$$
+\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \mathbf{h}_{t-1} + \mathbf{z}_t \odot \tilde{\mathbf{h}}_t
+$$
+
+### Parámetros entrenables
+
+La celda GRU consta de tres componentes (dos compuertas y un generador de candidato), reduciendo en un 25 % el número de parámetros frente a la LSTM:
+
+$$
+\text{Total (GRU)} = 3\,(d_h \, d_x + d_h \, d_h + d_h) = 3\, d_h\,(d_x + d_h + 1)
+$$
+
+## Modelo GRU-D: GRU con decaimiento temporal
+
+El modelo **GRU-D**, propuesto por Zhengping Che et al. en 2018 [@che2018recurrent], extiende la celda GRU convencional para gestionar de forma nativa series temporales multivariadas con **valores ausentes** e **intervalos de tiempo irregulares**, dos rasgos omnipresentes en los registros médicos electrónicos. El flujo de datos de la celda se esquematiza en la @fig-grud.
+
+![Celda GRU-D: los intervalos δ_t y la máscara m_t activan un decaimiento temporal entrenable que rige la imputación de la entrada ausente y el debilitamiento del estado oculto, reintroducidos en una celda GRU clásica.](images/fig-grud.png){#fig-grud width="40%"}
+
+### Motivación: las dos propiedades clave de los datos clínicos
+
+La motivación del modelo parte de dos observaciones fundamentales:
+
+1.  **Ausencia informativa (*informative missingness*).** El hecho de que falte un dato no es aleatorio (caso MNAR, *Missing Not At Random*). La frecuencia y el patrón con el que se mide —o se omite— una variable clínica suelen estar correlacionados con la etiqueta objetivo. Por ejemplo, en UCI el ritmo cardíaco se monitoriza de forma continua, mientras que el lactato se mide de forma esporádica; esta diferencia en los patrones de medición refleja decisiones clínicas críticas.
+2.  **Homeostasis y pérdida de influencia con el tiempo.**
+    -   **Propiedad 1.** El valor real de una variable ausente tiende a regresar progresivamente a un valor por defecto estable (p. ej., la media poblacional) conforme transcurre más tiempo desde su última medición.
+    -   **Propiedad 2.** La influencia de una variable observada en el pasado sobre las predicciones actuales disminuye gradualmente a medida que pasa el tiempo sin nuevas mediciones.
+
+GRU-D incorpora un mecanismo de **decaimiento temporal entrenable** en la propia arquitectura para modelar explícitamente ambas propiedades.
+
+### Notación y representación del patrón de ausencia
+
+Se considera una serie temporal multivariada con $D$ variables registradas en instantes $s_t$ ($t = 1, \dots, T$). Se definen las siguientes variables auxiliares.
+
+**Vector de máscara** $\mathbf{m}_t \in \{0, 1\}^{D}$:
+
+$$
+m_t^d =
+\begin{cases}
+1, & \text{si } x_t^d \text{ es observado} \\
+0, & \text{en caso contrario}
+\end{cases}
+$$
+
+**Intervalo de tiempo desde la última observación** $\boldsymbol{\delta}_t \in \mathbb{R}^{D}$:
+
+$$
+\delta_t^d =
+\begin{cases}
+s_t - s_{t-1} + \delta_{t-1}^d, & \text{si } t > 1,\; m_{t-1}^d = 0 \\
+s_t - s_{t-1}, & \text{si } t > 1,\; m_{t-1}^d = 1 \\
+0, & \text{si } t = 1
+\end{cases}
+$$
+
+### Decaimiento temporal entrenable
+
+Se introduce un vector de tasas de decaimiento $\boldsymbol{\gamma}_t$ calculado a partir de $\boldsymbol{\delta}_t$:
+
+$$
+\boldsymbol{\gamma}_t = \exp\left(-\max\left(0,\; \mathbf{W}_\gamma \, \boldsymbol{\delta}_t + \mathbf{b}_\gamma\right)\right)
+$$
+
+El uso de la exponencial sobre el negativo de un rectificador lineal (ReLU) garantiza dos restricciones deseables: $\gamma_t^d \in (0, 1]$ y un decaimiento monotónicamente creciente con el tiempo transcurrido. Los parámetros $\mathbf{W}_\gamma$ y $\mathbf{b}_\gamma$ se aprenden durante el entrenamiento, lo que permite ajustar empíricamente la escala temporal del fenómeno homeostático.
+
+El modelo implementa **dos mecanismos de decaimiento independientes**.
+
+#### Decaimiento de la entrada $\boldsymbol{\gamma}_{x_t} \in \mathbb{R}^{D}$
+
+Dirige las variables ausentes hacia la media empírica poblacional:
+
+$$
+\boldsymbol{\gamma}_{x_t} = \exp\left(-\max\left(0,\; \mathbf{W}_{\gamma_x} \, \boldsymbol{\delta}_t + \mathbf{b}_{\gamma_x}\right)\right)
+$$
+
+Particularidad: la matriz $\mathbf{W}_{\gamma_x} \in \mathbb{R}^{D \times D}$ se **restringe a ser diagonal**, forzando que la tasa de decaimiento de cada variable dependa únicamente de sus propios intervalos temporales. La entrada decaída $\hat{\mathbf{x}}_t$ se define para cada componente $d$ como:
+
+$$
+\hat{x}_t^d = m_t^d \, x_t^d + (1 - m_t^d)\left(\gamma_{x_t}^d \, x_{t'}^d + (1 - \gamma_{x_t}^d)\,\tilde{x}^d\right)
+$$
+
+donde $x_{t'}^d$ es el valor de la última observación válida ($t' < t$) y $\tilde{x}^d$ la media empírica de la variable en el conjunto de entrenamiento.
+
+#### Decaimiento del estado oculto $\boldsymbol{\gamma}_{h_t} \in \mathbb{R}^{d_h}$
+
+Debilita el estado oculto previo antes de procesar el paso actual, simulando la pérdida gradual de influencia de la historia antigua:
+
+$$
+\boldsymbol{\gamma}_{h_t} = \exp\left(-\max\left(0,\; \mathbf{W}_{\gamma_h} \, \boldsymbol{\delta}_t + \mathbf{b}_{\gamma_h}\right)\right), \qquad \hat{\mathbf{h}}_{t-1} = \boldsymbol{\gamma}_{h_t} \odot \mathbf{h}_{t-1}
+$$
+
+Particularidad: a diferencia de la entrada, $\mathbf{W}_{\gamma_h} \in \mathbb{R}^{d_h \times D}$ **no se restringe a ser diagonal**, permitiendo que los intervalos temporales de las $D$ variables de entrada interactúen entre sí y regulen conjuntamente el decaimiento de las variables latentes.
+
+### Ecuaciones de actualización de GRU-D
+
+Las ecuaciones finales sustituyen la entrada estándar por la entrada decaída $\hat{\mathbf{x}}_t$, el estado oculto anterior por el estado decaído $\hat{\mathbf{h}}_{t-1}$ e incorporan explícitamente el vector de máscara $\mathbf{m}_t$ en las compuertas.
+
+**Puerta de reinicio:**
+
+$$
+\mathbf{r}_t = \sigma\left(\mathbf{W}_r \hat{\mathbf{x}}_t + \mathbf{U}_r \hat{\mathbf{h}}_{t-1} + \mathbf{V}_r \mathbf{m}_t + \mathbf{b}_r\right)
+$$
+
+**Puerta de actualización:**
+
+$$
+\mathbf{z}_t = \sigma\left(\mathbf{W}_z \hat{\mathbf{x}}_t + \mathbf{U}_z \hat{\mathbf{h}}_{t-1} + \mathbf{V}_z \mathbf{m}_t + \mathbf{b}_z\right)
+$$
+
+**Estado oculto candidato:**
+
+$$
+\tilde{\mathbf{h}}_t = \tanh\left(\mathbf{W}_h \hat{\mathbf{x}}_t + \mathbf{U}_h (\mathbf{r}_t \odot \hat{\mathbf{h}}_{t-1}) + \mathbf{V}_h \mathbf{m}_t + \mathbf{b}_h\right)
+$$
+
+**Actualización del estado oculto:**
+
+$$
+\mathbf{h}_t = (1 - \mathbf{z}_t) \odot \hat{\mathbf{h}}_{t-1} + \mathbf{z}_t \odot \tilde{\mathbf{h}}_t
+$$
+
+donde $\mathbf{V}_r, \mathbf{V}_z, \mathbf{V}_h \in \mathbb{R}^{d_h \times d_x}$ son las matrices de pesos dedicadas al procesamiento del vector de máscara $\mathbf{m}_t$.
+
+### Recuento de parámetros entrenables
+
+Adicionalmente a las matrices de la celda GRU convencional, GRU-D introduce parámetros ligados a los decaimientos y al procesamiento de la máscara. Tomando $d_x = D$ y $d_h$ como dimensionalidades de entrada y estado oculto:
+
+1.  Pesos de entrada ($\mathbf{W}_z, \mathbf{W}_r, \mathbf{W}_h$): $3\,(d_h \, d_x)$.
+2.  Pesos recurrentes ($\mathbf{U}_z, \mathbf{U}_r, \mathbf{U}_h$): $3\,(d_h \, d_h)$.
+3.  Pesos de la máscara ($\mathbf{V}_z, \mathbf{V}_r, \mathbf{V}_h$): $3\,(d_h \, d_x)$.
+4.  Sesgos de las compuertas ($\mathbf{b}_z, \mathbf{b}_r, \mathbf{b}_h$): $3\, d_h$.
+5.  Decaimiento deentrada ($\mathbf{W}_{\gamma_x}$ diagonal, $\mathbf{b}_{\gamma_x}$): $2\, d_x$.
+6.  Decaimiento del estado oculto ($\mathbf{W}_{\gamma_h}$, $\mathbf{b}_{\gamma_h}$): $d_h \, d_x + d_h$.
+
+Sumando todos los componentes:
+
+$$
+\text{Total (GRU-D)} = 7\, d_h \, d_x + 3\, d_h^2 + 4\, d_h + 2\, d_x
+$$
+
+### ¿Por qué GRU-D es adecuado para valores ausentes?
+
+1.  **Unificación de imputación y predicción.** Tradicionalmente, el tratamiento de los datos ausentes requiere un proceso de dos etapas: imputación estadística previa (MICE, interpolación *spline*, KNN) seguida del entrenamiento del modelo predictivo sobre el conjunto completo. Esta aproximación es costosa y desacopla dos fases que conviene optimizar de forma conjunta. GRU-D integra la imputación (mediante el decaimiento hacia la media) **dentro de la propia arquitectura** del modelo de clasificación, optimizando todo el flujo en una única fase de entrenamiento guiada por gradiente.
+2.  **Explotación del patrón de medición (*masking*).** Al alimentar $\mathbf{m}_t$ directamente a las compuertas, la red es informada de si el valor actual fue medido o imputado. Si un dato ausente resulta indicativo de un empeoramiento clínico, las compuertas pueden abrirse o cerrarse selectivamente en función de este patrón.
+3.  **Sensibilidad al retraso temporal.** Gracias a $\boldsymbol{\delta}_t$, el modelo distingue entre un valor imputado de hace 10 minutos (altamente confiable) y otro de hace 10 horas (que debe decaer notablemente hacia la media poblacional por homeostasis). Ello evita el efecto estático y artificial de las técnicas clásicas de relleno temporal como *forward-fill* o imputación por la media fija.
+
+### Comparativa de arquitecturas
+
+::: {#tbl-comparativa-rnn}
+| Arquitectura | Célula de memoria | Compuertas | Parámetros | Manejo de ausentes | Decaimiento temporal |
+|:-----------|:-----------|:-----------|:-----------|:-----------|:-----------|
+| RNN | $\mathbf{h}_t$ único | Ninguna | $d_h(d_x+d_h+1)$ | No | No |
+| LSTM | $\mathbf{C}_t$ y $\mathbf{h}_t$ | 3 + candidato | $4\,d_h(d_x+d_h+1)$ | No | No |
+| GRU | $\mathbf{h}_t$ único | 2 + candidato | $3\,d_h(d_x+d_h+1)$ | No | No |
+| GRU-D | $\mathbf{h}_t$ con decaimiento | 2 + candidato | $7\,d_h d_x +3\,d_h^2 +4\,d_h +2\,d_x$ | Sí (nativo) | Sí (entrenable) |
+:::
+
+En síntesis, GRU-D hereda la eficiencia paramétrica de la celda GRU y le añade los mecanismos formales necesarios para procesar, en una sola pasada diferenciable, las dos patologías estructurales de los datos clínicos longitudinales reales: la ausencia y la irregularidad temporal. Por consiguiente, constituye el vehículo arquitectónico natural para el modelo de cribado longitudinal que se desarrolla en este TFM.
