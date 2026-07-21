@@ -1,0 +1,48 @@
+# Local pixi environment for the simplified DTE pipeline.
+#
+# Reproduces the `pyds` pixi *global* env (see ~/.pixi/manifests/pixi-global.toml)
+# so the pipeline runs in one place — Snakemake + torch + pandas + pyarrow together,
+# which is what lets every rule use the standard `script:` directive in-process.
+#
+#   pixi install            # build the env from this manifest (writes pixi.lock)
+#   pixi run dryrun         # snakemake -n  (the DAG)
+#   pixi run pipeline       # snakemake -c4 (full run: raw -> pkl -> models)
+#   pixi shell              # drop into the env, then: snakemake ...
+
+[workspace]
+name = "dte-synthea-lung"
+version = "0.1.0"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = "3.12.*"
+
+# -- core (data science + survival + torch) --
+numpy = "*"
+pandas = "*"
+pyarrow = "*"              # parquet I/O in the ingest stage
+matplotlib = "*"
+scikit-learn = "*"
+lifelines = "*"            # cox_ph_loss reference + concordance_index
+scikit-survival = "*"
+pytorch-cpu = "*"          # no local GPU; the encoders run on CPU here
+ipython = "*"
+ipykernel = "*"
+jupyter = "*"
+python-dotenv = "*"
+pip = "*"
+# -- snakemake + plugins + tooling --
+snakemake-minimal = { version = ">=9,<10", channel = "bioconda" }
+snakemake-executor-plugin-slurm = { version = ">=2,<3", channel = "bioconda" }
+snakefmt = "*"                # code formatting for snakemake rules
+graphviz = "*"            # rulegraph rendering
+ruff = "*"                # code formatting for python scripts
+
+[tasks]
+dryrun = "snakemake -n"
+pipeline = "snakemake -c4"                                   # local dev (4 cores)
+# Cluster: SLURM executor, ≤100 concurrent jobs and ≤120 cores at once. Per-rule
+# threads/mem_mb/runtime/slurm_partition (in workflow/rules/*.smk) size each job.
+cluster = "snakemake --executor slurm --jobs 100 --cores 120"
+rulegraph = "snakemake --rulegraph | dot -Tpng -o results/rulegraph.png"
