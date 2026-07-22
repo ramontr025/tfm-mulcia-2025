@@ -45,4 +45,6 @@ pipeline = "snakemake -c4"                                   # local dev (4 core
 # Cluster: SLURM executor, ≤100 concurrent jobs and ≤120 cores at once. Per-rule
 # threads/mem_mb/runtime/slurm_partition (in workflow/rules/*.smk) size each job.
 cluster = "snakemake --executor slurm --jobs 100 --cores 120"
-rulegraph = "snakemake --rulegraph | dot -Tpng -o results/rulegraph.png"
+rulegraph = "snakemake --rulegraph | dot -Tpng -o results/rulegraph.png"    
+smkfmt = "snakefmt workflow/rules/*.smk"
+pyfmt = "ruff check --fix workflow/scripts/ && ruff format workflow/scripts/"
