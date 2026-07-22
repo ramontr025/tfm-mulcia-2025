@@ -14,10 +14,14 @@
 /resources/
 /results/
 /out/
-/logs/
+
+# logs/: ignore everything inside recursively (files AND subdirectories),
+# keep only the top-level folder tracked via .gitkeep.
+/logs/*
+!/logs/.gitkeep
 
 # ── Every hidden (dot) directory — mandatory, no exceptions.
-#    Covers .snakemake, .pixi, .claude, .venv, .pytest_cache, .mypy_cache,
+#    Covers .snakemake, .pixi, .venv, .pytest_cache, .mypy_cache,
 #    .ruff_cache, .ipynb_checkpoints, .vscode, .idea, .git, … ──
 .*/
 
