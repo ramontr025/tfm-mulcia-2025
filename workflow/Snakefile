@@ -1,0 +1,49 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Snakefile: la base del pipeline.
+#
+# snakemake lee la config, construye unos cuantos mapas que usan las reglas, e incluye
+# los archivos de reglas. `rule all` es el objetivo por defecto: lo que pides cuando
+# ejecutas `snakemake` sin nombrar un archivo. Ahí ves los endpoints del pipeline.
+#
+# Ejecuta:
+#   pixi run snakemake -n           # dry run: imprime el DAG sin correr nada
+#   pixi run snakemake -c4          # corre el pipeline con 4 nucleos
+#   pixi run snakemake -c1 results/train/sequences.pkl   # construye un objetivo suelto
+# ─────────────────────────────────────────────────────────────────────────────
+configfile: "config/config.yaml"
+
+
+# ── Mapas derivados de la config que usan las reglas ──
+SPLITS = ["train", "val", "holdout"]
+LANDMARKS = list(
+    range(config["cohort"]["landmark_min"], config["cohort"]["landmark_max"] + 1)
+)
+MODELS = {
+    m["name"]: m for m in config.get("models", [])
+}  # nombre -> fila del modelo (issues 2 a 5)
+# `models:` no existe en la config todavia (llega en el issue 2), de ahi el
+# `.get(..., [])`: sin esto, cargar el Snakefile ya revienta antes del issue 1.
+
+
+wildcard_constraints:
+    pool="discovery|holdout",  # build_cohort corre por pool; el reparto train/val es aparte
+    split="|".join(SPLITS),
+    name="|".join(MODELS),
+
+
+# ── Endpoint por defecto ──
+# Hoy el pipeline llega hasta los datos que consumen los modelos: un pickle de
+# secuencias por split (issue 1). Cuando implementes los issues 2 a 5, el endpoint
+# pasará a ser results/comparison.png, y descomentaras las lineas de abajo.
+rule all:
+    input:
+        expand("results/{split}/sequences.pkl", split=SPLITS),
+        # issue 2:  expand("results/metrics/{name}.json", name=list(MODELS)),
+        # issue 3:  "results/comparison.png",
+
+
+# ── Reglas ──
+include: "rules/ingest.smk"
+
+
+# issue 2:  include: "rules/models.smk"
