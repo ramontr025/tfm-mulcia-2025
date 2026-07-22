@@ -1,0 +1,74 @@
+# DTE pipeline — raw Synthea -> sequence pickles -> models.
+#
+# Every model consumes the SAME representation (the sequence pickles). There is no
+# pre-built cohort file: the cohort (Id, duration, event) is derived from raw
+# patients/conditions/observations.
+
+# Raw sources: two pools that never mix.
+#   discovery -> everything used to FIT the model comes from here (split into
+#                train/val below).
+#   holdout   -> the final test pool, separate from the source. Fitting never
+#                sees it; it only enters evaluation (issue 2).
+raw:
+  discovery:
+    patients: "data/discovery/patients.csv.gz"
+    conditions: "data/discovery/conditions.csv.gz"
+    observations: "data/discovery/observations.csv.gz"
+  holdout:
+    patients: "data/holdout/patients.csv.gz"
+    conditions: "data/holdout/conditions.csv.gz"
+    observations: "data/holdout/observations.csv.gz"
+
+# Recursos externos (fuera de git, ~100 MB): mapa SNOMED CT -> ICD-10 para traducir los
+# codigos de diagnostico crudos de Synthea a capitulos ICD-10.
+# extraido de https://thetuvaproject.com/terminology/snomed-to-icd10-map
+resources:
+  snomed_icd10_map: "resources/snomed_icd10_map.csv"
+
+# How discovery is split into train/val: patient-level, stratified by event, with
+# a fixed seed. holdout is not split further, it is already its own pool.
+splits:
+  train_frac: 0.80   # val_frac = 1 - train_frac
+  seed: 0
+
+# ── cohort construction (Stage 1) ──
+cohort:
+  index_age:    18.0   # edad de entrada a la cohorte
+  landmark_min: 45     # el analisis por landmark recorre range(45, 71)
+  landmark_max: 70
+  horizon:      5.0    # ventana de prediccion en años     
+  lung_cancer_snomed_codes:
+    - "254632001"       # Non-small cell lung cancer
+    - "254637007"       # Small cell lung cancer
+    - "424132000"       # Suspected lung cancer
+    - "67811000119102"  # Primary malignant neoplasm of lung
+
+# ── sequence representation (Stage 2) ──
+features:
+  lab_codes_to_keep:
+    - "8480-6"   # Systolic BP
+    - "8462-4"   # Diastolic BP
+    - "9279-1"   # Respiratory rate
+    - "8867-4"   # Heart rate
+    - "29463-7"  # Body Weight
+    - "8302-2"   # Body Height
+    - "39156-5"  # BMI
+    - "70274-6"  # GAD-7
+    - "718-7"    # Hemoglobin
+    - "777-3"    # Platelets
+    - "785-6"    # MCH
+    - "786-4"    # MCHC
+    - "787-2"    # MCV
+    - "32623-1"  # Platelet mean volume
+    - "32207-3"  # Platelet distribution width
+    - "4544-3"   # Hematocrit
+    - "6690-2"   # Leukocytes
+    - "789-8"    # Erythrocytes
+    - "21000-5"  # Erythrocyte distribution width
+    - "2085-9"   # HDL Cholesterol
+    - "2571-8"   # Triglycerides
+    - "2093-3"   # Total Cholesterol
+    - "18262-6"  # LDL Cholesterol
+  lab_codes_to_exclude: []
+  excluded_icd_initials: ["O", "Z", "V", "W", "X", "Y"]
+  outcome_icd_prefixes: ["C33", "C34"]
