@@ -34,7 +34,7 @@ python-dotenv = "*"
 pip = "*"
 # -- snakemake + plugins + tooling --
 snakemake-minimal = { version = ">=9,<10", channel = "bioconda" }
-snakemake-executor-plugin-slurm = { version = ">=2,<3", channel = "bioconda" }
+# snakemake-executor-plugin-slurm = { version = ">=2,<3", channel = "bioconda" }
 snakefmt = "*"                # code formatting for snakemake rules
 graphviz = "*"            # rulegraph rendering
 ruff = "*"                # code formatting for python scripts
