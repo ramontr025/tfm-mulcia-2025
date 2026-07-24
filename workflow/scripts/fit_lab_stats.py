@@ -44,7 +44,26 @@ def fit_lab_stats(train_ids, observations, lab_codes):
     # TODO. Filtra observations a los pacientes de train_ids, quedate con las filas
     # cuyo CODE este en lab_codes, y saca por cada codigo la media y la desviacion de
     # VALUE (numerico). Devuelve los dos arrays en el orden de lab_codes.
-    raise NotImplementedError("fit_lab_stats: pendiente (issue 1)")
+
+    # Filtrado de observaciones a pacientes exclusivamente de train
+    observations_train = observations[observations["PATIENT"].isin(train_ids)]
+    # Filtrado para incluir excluivamente los codigos de laboratorio especificados en lab_codes
+    observations_train = observations_train[observations_train["CODE"].isin(lab_codes)]
+
+    mean = np.zeros(len(lab_codes), dtype=float)
+    std = np.ones(len(lab_codes), dtype=float)
+
+    for i, code in enumerate(lab_codes):
+        values = pd.to_numeric(
+            observations_train.loc[observations_train["CODE"] == code, "VALUE"],
+            errors="coerce",
+        ).dropna().to_numpy()
+        if values.size:  # Si hay valores para este lab en train, calcula media y desviacion
+            mean[i] = float(np.mean(values))
+            std[i] = float(np.std(values))
+
+    return mean, std
+
 
 
 # ── Cuerpo del script ──
