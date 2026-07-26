@@ -64,6 +64,20 @@ def load_sequences(pkl_path):
     return sequences, list(cache["lab_codes"]), cache["cohort"]
 
 
+def _to_naive_datetime(values):
+    """Convert datetime-like values to naive datetimes to avoid tz mismatches."""
+    dt = pd.to_datetime(values, errors="coerce")
+    if isinstance(dt, pd.Series):
+        if getattr(dt.dt, "tz", None) is not None:
+            return dt.dt.tz_convert(None)
+        return dt
+    if isinstance(dt, pd.Timestamp):
+        if getattr(dt, "tzinfo", None) is not None:
+            return dt.tz_convert(None)
+        return dt
+    return dt
+
+
 def build_patient_sequence(
     pid, birthdate, gender, obs_pid, cond_pid, lab_codes, lab_mean, lab_std
 ):
@@ -95,7 +109,61 @@ def build_patient_sequence(
     #   - `codes` es una lista de listas: por timestep, los capitulos ICD-10 (strings)
     #     de cond_pid["icd10_parent"] en esa edad (ya vienen traducidos y filtrados).
     #   - `sex_male` es 1.0 si gender == "M", 0.0 en otro caso.
-    raise NotImplementedError("build_patient_sequence: pendiente (issue 1)")
+
+    birthdate_naive = _to_naive_datetime(birthdate)
+    obs_pid["AGE"] = (
+        _to_naive_datetime(obs_pid["DATE"]) - birthdate_naive
+    ).dt.days / 365.25
+    cond_pid["AGE"] = (
+        _to_naive_datetime(cond_pid["START"]) - birthdate_naive
+    ).dt.days / 365.25
+
+    obs_pid = obs_pid.dropna(subset=["AGE"])
+    cond_pid = cond_pid.dropna(subset=["AGE"])
+
+    if obs_pid.empty and cond_pid.empty:
+        return None
+
+    obs_by_age = {age: group for age, group in obs_pid.groupby("AGE", sort=True)}
+    cond_by_age = {age: group for age, group in cond_pid.groupby("AGE", sort=True)}
+
+    times = np.sort(
+        np.unique(
+            np.concatenate(
+                [obs_pid["AGE"].to_numpy(), cond_pid["AGE"].to_numpy()]
+            )
+        )
+    )
+
+    labs = np.zeros((len(times), len(lab_codes)), dtype=np.float32)
+    masks = np.zeros((len(times), len(lab_codes)), dtype=np.float32)
+    codes = []
+
+    for i, age in enumerate(times):
+        age_key = float(age)
+        obs_at_age = obs_by_age.get(age_key, pd.DataFrame(columns=obs_pid.columns))
+        for j, code in enumerate(lab_codes):
+            values = pd.to_numeric(
+                obs_at_age.loc[obs_at_age["CODE"] == code, "VALUE"],
+                errors="coerce",
+            ).dropna()
+            if not values.empty:
+                std = float(lab_std[j])
+                if std == 0.0:
+                    std = 1.0
+                labs[i, j] = (float(values.iloc[0]) - float(lab_mean[j])) / std
+                masks[i, j] = 1.0
+
+        cond_at_age = cond_by_age.get(age_key, pd.DataFrame(columns=cond_pid.columns))
+        codes.append(cond_at_age["icd10_parent"].astype(str).tolist())
+
+    return {
+        "times": times.astype(np.float32),
+        "labs": labs,
+        "masks": masks,
+        "sex_male": 1.0 if str(gender).upper() == "M" else 0.0,
+        "codes": codes,
+    }
 
 
 # ── Cuerpo del script (escrito entero: solo build_patient_sequence queda pendiente) ──

@@ -41,13 +41,7 @@ def fit_lab_stats(train_ids, observations, lab_codes):
         (mean, std): dos arrays (D,) alineados con lab_codes. Si un lab no aparece
         nunca en train, usa mean=0.0, std=1.0 para no dividir por cero.
     """
-    # TODO. Filtra observations a los pacientes de train_ids, quedate con las filas
-    # cuyo CODE este en lab_codes, y saca por cada codigo la media y la desviacion de
-    # VALUE (numerico). Devuelve los dos arrays en el orden de lab_codes.
-
-    # Filtrado de observaciones a pacientes exclusivamente de train
     observations_train = observations[observations["PATIENT"].isin(train_ids)]
-    # Filtrado para incluir excluivamente los codigos de laboratorio especificados en lab_codes
     observations_train = observations_train[observations_train["CODE"].isin(lab_codes)]
 
     mean = np.zeros(len(lab_codes), dtype=float)
@@ -58,9 +52,10 @@ def fit_lab_stats(train_ids, observations, lab_codes):
             observations_train.loc[observations_train["CODE"] == code, "VALUE"],
             errors="coerce",
         ).dropna().to_numpy()
-        if values.size:  # Si hay valores para este lab en train, calcula media y desviacion
+        if values.size:
             mean[i] = float(np.mean(values))
-            std[i] = float(np.std(values))
+            std_value = float(np.std(values))
+            std[i] = std_value if std_value > 0.0 else 1.0
 
     return mean, std
 
