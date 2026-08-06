@@ -81,81 +81,60 @@ def _to_naive_datetime(values):
 def build_patient_sequence(
     pid, birthdate, gender, obs_pid, cond_pid, lab_codes, lab_mean, lab_std
 ):
-    """Build the irregular sequence for one patient.
+    birthdate = _to_naive_datetime(birthdate)
+    code_idx = {code: j for j, code in enumerate(lab_codes)}  # code -> column index
 
-    Args:
-        pid: patient id.
-        birthdate: fecha de nacimiento del paciente (Timestamp), para pasar de
-            fecha de observacion/diagnostico a edad.
-        gender: "M" o "F", crudo de patients.
-        obs_pid: this patient's lab rows (DATE, CODE, VALUE).
-        cond_pid: this patient's diagnosis rows (START, icd10_parent), YA traducidas a
-            capitulo ICD-10 y filtradas (sin ruido ni desenlace) por el cuerpo del script.
-        lab_codes: ordered lab codes that become the D columns of ``labs``.
-        lab_mean, lab_std: per-column statistics from fit_lab_stats (train only).
+    obs = obs_pid.copy()
+    obs["AGE"] = (_to_naive_datetime(obs["DATE"]) - birthdate).dt.days / 365.25
+    obs["VAL"] = pd.to_numeric(obs["VALUE"], errors="coerce")
+    obs = obs.dropna(subset=["AGE", "VAL"])
+    # TODO: keep only labs in lab_codes, and one value per (AGE, CODE)
+    obs = obs[obs["CODE"].isin(lab_codes)]
+    obs = (
+        obs.groupby(["AGE", "CODE"]).first().reset_index()
+    )  # Con esta línea agrupamos las filas que coinciden en (AGE,CODE) y nos quedamos con la primera.
 
-    Returns:
-        A dict ``{"times", "labs", "masks", "sex_male", "codes"}``, or ``None`` if the
-        patient has no observations.
-    """
-    # TODO. Construye la secuencia del paciente:
-    #   - Convierte las fechas de obs_pid (DATE) y cond_pid (START) a edad:
-    #     (fecha - birthdate).dt.days / 365.25.
-    #   - Ordena las observaciones por edad. Agrupa por edad: cada edad unica es un
-    #     timestep, y `times` (T,) son esas edades.
-    #   - Monta `labs` (T, D) y `masks` (T, D), una columna por cada codigo de
-    #     lab_codes. masks vale 1 donde el lab se midio y 0 donde no; labs lleva el
-    #     valor z-scoreado (con lab_mean/lab_std) donde masks es 1 y 0 donde es 0.
-    #   - `codes` es una lista de listas: por timestep, los capitulos ICD-10 (strings)
-    #     de cond_pid["icd10_parent"] en esa edad (ya vienen traducidos y filtrados).
-    #   - `sex_male` es 1.0 si gender == "M", 0.0 en otro caso.
+    cond = cond_pid.copy()
+    cond["AGE"] = (_to_naive_datetime(cond["START"]) - birthdate).dt.days / 365.25
+    cond = cond.dropna(subset=["AGE"])
 
-    birthdate_naive = _to_naive_datetime(birthdate)
-    obs_pid["AGE"] = (
-        _to_naive_datetime(obs_pid["DATE"]) - birthdate_naive
-    ).dt.days / 365.25
-    cond_pid["AGE"] = (
-        _to_naive_datetime(cond_pid["START"]) - birthdate_naive
-    ).dt.days / 365.25
-
-    obs_pid = obs_pid.dropna(subset=["AGE"])
-    cond_pid = cond_pid.dropna(subset=["AGE"])
-
-    if obs_pid.empty and cond_pid.empty:
+    if obs.empty and cond.empty:
         return None
 
-    obs_by_age = {age: group for age, group in obs_pid.groupby("AGE", sort=True)}
-    cond_by_age = {age: group for age, group in cond_pid.groupby("AGE", sort=True)}
-
-    times = np.sort(
-        np.unique(
-            np.concatenate(
-                [obs_pid["AGE"].to_numpy(), cond_pid["AGE"].to_numpy()]
-            )
-        )
-    )
+    times = np.unique(np.concatenate([obs["AGE"].to_numpy(), cond["AGE"].to_numpy()]))
+    age_idx = {
+        age: i for i, age in enumerate(times)
+    }  # age -> row index (times is already sorted) (np.unique ya ordena)
 
     labs = np.zeros((len(times), len(lab_codes)), dtype=np.float32)
     masks = np.zeros((len(times), len(lab_codes)), dtype=np.float32)
-    codes = []
+    if not obs.empty:
+        ti = obs["AGE"].map(age_idx).to_numpy()  # row index for each obs row
+        ci = obs["CODE"].map(code_idx).to_numpy()  # column index for each obs row
+        # TODO: scatter the z-scored values into `labs`, and 1.0 into `masks`
 
-    for i, age in enumerate(times):
-        age_key = float(age)
-        obs_at_age = obs_by_age.get(age_key, pd.DataFrame(columns=obs_pid.columns))
-        for j, code in enumerate(lab_codes):
-            values = pd.to_numeric(
-                obs_at_age.loc[obs_at_age["CODE"] == code, "VALUE"],
-                errors="coerce",
-            ).dropna()
-            if not values.empty:
-                std = float(lab_std[j])
-                if std == 0.0:
-                    std = 1.0
-                labs[i, j] = (float(values.iloc[0]) - float(lab_mean[j])) / std
-                masks[i, j] = 1.0
+        # Extraemos y convertimos los valores crudos a numérico
+        raw_vals = pd.to_numeric(obs["VALUE"], errors="coerce").to_numpy(
+            dtype=np.float32
+        )
 
-        cond_at_age = cond_by_age.get(age_key, pd.DataFrame(columns=cond_pid.columns))
-        codes.append(cond_at_age["icd10_parent"].astype(str).tolist())
+        # Calculamos la media y desviación estandar correspondientes a cada columna ci
+        means = lab_mean[ci]
+        stds = np.where(lab_std[ci] == 0.0, 1.0, lab_std[ci])
+
+        # Z-score vectorizado
+        z_vals = (raw_vals - means) / stds
+
+        # Asignación vectorizada en las matrices labs y masks
+        labs[ti, ci] = z_vals
+        masks[ti, ci] = 1.0
+
+    codes = [[] for _ in times]
+    # TODO: for each age group in cond, put its icd10_parent list at codes[age_idx[age]]
+    if not cond.empty:
+        for age, group in cond.groupby("AGE"):
+            idx = age_idx[age]
+            codes[idx] = group["icd10_parent"].astype(str).tolist()
 
     return {
         "times": times.astype(np.float32),

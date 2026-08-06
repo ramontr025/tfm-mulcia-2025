@@ -48,17 +48,20 @@ def fit_lab_stats(train_ids, observations, lab_codes):
     std = np.ones(len(lab_codes), dtype=float)
 
     for i, code in enumerate(lab_codes):
-        values = pd.to_numeric(
-            observations_train.loc[observations_train["CODE"] == code, "VALUE"],
-            errors="coerce",
-        ).dropna().to_numpy()
+        values = (
+            pd.to_numeric(
+                observations_train.loc[observations_train["CODE"] == code, "VALUE"],
+                errors="coerce",
+            )
+            .dropna()
+            .to_numpy()
+        )
         if values.size:
             mean[i] = float(np.mean(values))
             std_value = float(np.std(values))
             std[i] = std_value if std_value > 0.0 else 1.0
 
     return mean, std
-
 
 
 # ── Cuerpo del script ──
