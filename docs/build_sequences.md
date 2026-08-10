@@ -10,7 +10,7 @@ La secuencia resultante para cada paciente se representa como un diccionario con
 
 ```python
 {
-    "times": np.ndarray,     # Array 1D (T,) con las edades (en años) de cada timestep
+    "times": np.ndarray,     # Array 1D (T,) con la unión de edades (en años) de laboratorios y diagnósticos
     "labs": np.ndarray,      # Matriz 2D (T, D) con los valores de laboratorio z-scoreados
     "masks": np.ndarray,     # Matriz 2D (T, D) binaria (1.0 si se midió el lab, 0.0 si no)
     "sex_male": float,       # 1.0 si el género es masculino ("M"), 0.0 en otro caso
@@ -143,8 +143,14 @@ Esta función encapsula la construcción vectorizada de la secuencia irregular d
     age_idx = {age: i for i, age in enumerate(times)}
 ```
 
-- `np.unique` combina todas las edades registradas (observaciones y diagnósticos), elimina duplicados y **ordena de menor a mayor** la lista de edades.
+- `np.unique` combina todas las edades registradas tanto de observaciones analíticas (`obs["AGE"]`) como de diagnósticos (`cond["AGE"]`), elimina duplicados y **ordena de menor a mayor** la lista completa de edades. Por tanto, `times` contiene la unión de todos los instantes temporales en los que ocurrió al menos un evento (sea análisis o diagnóstico).
 - `age_idx` crea un mapeo rápido de cada edad única a su índice de fila `i` en la matriz temporal ($0 \dots T-1$).
+
+> [!NOTE]
+> **Comportamiento por timestep según el evento ocurrido en esa edad (`AGE`):**
+> - **Solo laboratorio:** `labs` y `masks` contendrán los valores z-scoreados y la máscara de las analíticas de esa edad; `codes` contendrá una lista vacía `[]`.
+> - **Solo diagnóstico:** `labs` y `masks` serán ceros (`0.0`); `codes` contendrá la lista de capítulos ICD-10 diagnosticados en esa edad.
+> - **Coincidencia (laboratorio + diagnóstico en la misma edad):** conviven en la misma fila $i$ del timestep (`labs`/`masks` con las mediciones y `codes` con los diagnósticos).
 
 ### 4. Construcción vectorizada de `labs` y `masks`
 

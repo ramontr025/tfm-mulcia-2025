@@ -44,6 +44,4 @@ rule all:
 
 # ── Reglas ──
 include: "rules/ingest.smk"
-
-
-# issue 2:  include: "rules/models.smk"
+include: "rules/models.smk"
