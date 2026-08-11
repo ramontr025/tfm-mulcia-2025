@@ -38,7 +38,7 @@ wildcard_constraints:
 rule all:
     input:
         expand("results/{split}/sequences.pkl", split=SPLITS),
-        # issue 2:  expand("results/metrics/{name}.json", name=list(MODELS)),
+        expand("results/metrics/{name}.json", name=list(MODELS)),
         # issue 3:  "results/comparison.png",
 
 

@@ -1,3 +1,6 @@
+import torch
+
+
 def cox_ph_loss(
     risk_scores: torch.Tensor,   # (B,)  log-risk scores
     durations:   torch.Tensor,   # (B,)  time from landmark to event/censor

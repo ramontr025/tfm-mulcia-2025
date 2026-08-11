@@ -13,6 +13,14 @@ from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 # Permitir importar módulos locales desde workflow/scripts
 sys.path.append(str(Path(__file__).parent))
 
+from dataset import RawSequenceDatasetWithICD, raw_pad_collate_with_icd, load_sequences
+from engine import run_raw_loss_epoch_icd
+from model import TimeAwareGRUD
+
+
+# ── Cuerpo del script ──
+# Manda stdout y stderr al log de ESTE trabajo (snakemake.log[0])
+sys.stdout = sys.stderr = open(snakemake.log[0], "w", encoding="utf-8")
 
 # Leer parámetros e hiperparámetros inyectados desde Snakemake
 arch_name = snakemake.params.arch
@@ -54,7 +62,6 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}")
 
 # 1. Cargar el pickle de secuencias de entrada (train, val, holdout, etc.)
-
 sequences_train, lab_codes, cohort_train = load_sequences(snakemake.input.train)
 sequences_val, _, cohort_val = load_sequences(snakemake.input.val)
 
@@ -103,7 +110,12 @@ val_dataset_icd = RawSequenceDatasetWithICD(
     age_weight_gamma=age_weight_gamma,
 )
 
-mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
+all_labs = [s["labs"] for s in train_dataset_icd.samples]
+if all_labs:
+    all_labs_concat = np.concatenate(all_labs, axis=0)
+    mean_x = all_labs_concat.mean(axis=0)
+else:
+    mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
 
 # 5. Definición del modelo
 
