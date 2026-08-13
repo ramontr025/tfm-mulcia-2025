@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 sys.stdout = sys.stderr = open(snakemake.log[0], "w", encoding="utf-8")
 
 # 1. Cargar artefacto del modelo generado en train.py
-model_artifact = snakemake.input.model
+model_artifact = snakemake.input.model_path
 with open(model_artifact, "rb") as f:
     artifact = pickle.load(f)
 
@@ -95,9 +95,7 @@ for split_name, seqs, cohort in [
         n_samples = int(np.sum(idx))
         n_events = int(np.sum(evs[idx]))
         if n_events > 0:
-            ci_lm = concordance_index(
-                durs[idx], -risks[idx], evs[idx].astype(bool)
-            )
+            ci_lm = concordance_index(durs[idx], -risks[idx], evs[idx].astype(bool))
         else:
             ci_lm = 0.5
         c_indices_by_lm[str(lm)] = {
@@ -136,9 +134,7 @@ train_risks, train_durs, train_evs, _ = collect_raw_outputs(
     train_loader_55, model, device
 )
 
-H0, max_r = compute_baseline_hazard(
-    train_risks, train_durs, train_evs, HORIZON
-)
+H0, max_r = compute_baseline_hazard(train_risks, train_durs, train_evs, HORIZON)
 
 # 7. Evaluar calibración en el landmark 55 para val y holdout
 calibration_results = {}

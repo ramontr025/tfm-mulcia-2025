@@ -1,11 +1,12 @@
+#import de librerias
 import torch
 
 
 def cox_ph_loss(
-    risk_scores: torch.Tensor,   # (B,)  log-risk scores
-    durations:   torch.Tensor,   # (B,)  time from landmark to event/censor
-    events:      torch.Tensor,   # (B,)  1 = lung cancer, 0 = censored/other
-    weights:     torch.Tensor | None = None,   # (B,)  optional importance weights
+    risk_scores: torch.Tensor,  # (B,)  log-risk scores
+    durations: torch.Tensor,  # (B,)  time from landmark to event/censor
+    events: torch.Tensor,  # (B,)  1 = lung cancer, 0 = censored/other
+    weights: torch.Tensor | None = None,  # (B,)  optional importance weights
 ) -> torch.Tensor:
     """
     Negative Cox partial log-likelihood.
@@ -51,11 +52,11 @@ def cox_ph_loss(
         if sum_weights == 0:
             loss = torch.tensor(0.0, device=risk_scores.device)
         else:
-            loss = - torch.sum(log_likelihood * events * weights) / sum_weights
+            loss = -torch.sum(log_likelihood * events * weights) / sum_weights
     else:
         sum_events = torch.sum(events)
         if sum_events == 0:
-            loss = torch.tensor(0.0, device=risk_scores.device)
+            loss = (risk_scores * 0.0).sum()
         else:
-            loss = - torch.sum(log_likelihood * events) / sum_events
+            loss = -torch.sum(log_likelihood * events) / sum_events
     return loss

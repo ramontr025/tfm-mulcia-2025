@@ -2,6 +2,10 @@ rule train:
     input:
         train="results/train/sequences.pkl",
         val="results/val/sequences.pkl",
+        dataset="workflow/scripts/dataset.py",
+        model="workflow/scripts/model.py",
+        engine="workflow/scripts/engine.py",
+        loss="workflow/scripts/loss.py",
     output:
         "results/models/{name}.pkl",
     log:
@@ -27,10 +31,14 @@ rule train:
 
 rule eval:
     input:
-        model="results/models/{name}.pkl",
+        model_path="results/models/{name}.pkl",
         train="results/train/sequences.pkl",
         val="results/val/sequences.pkl",
         holdout="results/holdout/sequences.pkl",
+        dataset="workflow/scripts/dataset.py",
+        model="workflow/scripts/model.py",
+        engine="workflow/scripts/engine.py",
+        loss="workflow/scripts/loss.py",
     output:
         "results/metrics/{name}.json",
     log:

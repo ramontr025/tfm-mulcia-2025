@@ -24,29 +24,51 @@ def run_raw_loss_epoch_icd(loader, model, device, optimizer=None):
     ctx = torch.enable_grad() if is_train else torch.no_grad()
     with ctx:
         for batch in loader:
-            (labs, masks, deltas, lengths, sex_male,
-             time_since_index, durations, events, landmarks, weights, ids, flat_codes, offsets) = batch
+            (
+                labs,
+                masks,
+                deltas,
+                lengths,
+                sex_male,
+                time_since_index,
+                durations,
+                events,
+                landmarks,
+                weights,
+                ids,
+                flat_codes,
+                offsets,
+            ) = batch
 
-            labs             = labs.to(device)
-            masks            = masks.to(device)
-            deltas           = deltas.to(device)
-            lengths          = lengths.to(device)
-            sex_male         = sex_male.to(device)
+            labs = labs.to(device)
+            masks = masks.to(device)
+            deltas = deltas.to(device)
+            lengths = lengths.to(device)
+            sex_male = sex_male.to(device)
             time_since_index = time_since_index.to(device)
-            durations        = durations.to(device)
-            events           = events.to(device)
-            weights          = weights.to(device)
-            flat_codes       = flat_codes.to(device)
-            offsets          = offsets.to(device)
+            durations = durations.to(device)
+            events = events.to(device)
+            weights = weights.to(device)
+            flat_codes = flat_codes.to(device)
+            offsets = offsets.to(device)
 
             # ── TODO 7 ── Forward pass, loss, and backward ───────────────────
             # 1. Call the model to get risk_scores.
             #    Signature: model(labs, masks, deltas, lengths, sex_male, time_since_index)
             #    Returns (last_risk, all_risks, h_states) — you only need the first.
-            (risk_scores,_,_)= model(labs, masks, deltas, lengths, sex_male, time_since_index, flat_codes, offsets)
+            (risk_scores, _, _) = model(
+                labs,
+                masks,
+                deltas,
+                lengths,
+                sex_male,
+                time_since_index,
+                flat_codes,
+                offsets,
+            )
             #
             # 2. Compute the loss with cox_ph_loss(risk_scores, durations, events, weights).
-            loss= cox_ph_loss(risk_scores, durations, events, weights)
+            loss = cox_ph_loss(risk_scores, durations, events, weights)
             #
             if is_train:
                 optimizer.zero_grad()
@@ -75,25 +97,27 @@ def run_raw_loss_epoch_icd(loader, model, device, optimizer=None):
     #     How should you transform all_risks before passing it?
     #   - The function expects event_observed as a boolean array.
     #
-    ci = concordance_index(np.array(all_dur), -np.array(all_risks), np.array(all_ev, dtype=bool))
+    ci = concordance_index(
+        np.array(all_dur), -np.array(all_risks), np.array(all_ev, dtype=bool)
+    )
     return mean_loss, ci
 
 
 def compute_baseline_hazard(risks, durations, events, horizon):
     """Breslow estimator: H0(horizon) from training data."""
-    risks     = np.asarray(risks,     dtype=np.float64)
+    risks = np.asarray(risks, dtype=np.float64)
     durations = np.asarray(durations, dtype=np.float64)
-    events    = np.asarray(events,    dtype=np.float64)
+    events = np.asarray(events, dtype=np.float64)
 
-    max_r   = risks.max()
+    max_r = risks.max()
     shifted = risks - max_r
     H0 = 0.0
     for t in np.unique(durations[events == 1]):
         if t > horizon:
             continue
-        d        = np.sum((durations == t) & (events == 1))
+        d = np.sum((durations == t) & (events == 1))
         risk_set = durations >= t
-        denom    = np.sum(np.exp(shifted[risk_set]))
+        denom = np.sum(np.exp(shifted[risk_set]))
         if denom > 0:
             H0 += d / denom
     return H0, max_r
@@ -109,15 +133,33 @@ def collect_raw_outputs(loader, model, device):
     risks, durs, evs, lms = [], [], [], []
     with torch.no_grad():
         for batch in loader:
-            (labs, masks, deltas, lengths, sex_male,
-             time_since_index, durations, events, landmarks, weights, ids, flat_codes, offsets) = batch
+            (
+                labs,
+                masks,
+                deltas,
+                lengths,
+                sex_male,
+                time_since_index,
+                durations,
+                events,
+                landmarks,
+                weights,
+                ids,
+                flat_codes,
+                offsets,
+            ) = batch
             r, _, _ = model(
-                labs.to(device), masks.to(device), deltas.to(device),
-                lengths.to(device), sex_male.to(device), time_since_index.to(device), flat_codes.to(device), offsets.to(device)
+                labs.to(device),
+                masks.to(device),
+                deltas.to(device),
+                lengths.to(device),
+                sex_male.to(device),
+                time_since_index.to(device),
+                flat_codes.to(device),
+                offsets.to(device),
             )
             risks.extend(r.cpu().numpy())
             durs.extend(durations.numpy())
             evs.extend(events.numpy())
             lms.extend(landmarks.numpy())
-    return (np.array(risks), np.array(durs),
-            np.array(evs, dtype=float), np.array(lms))
+    return (np.array(risks), np.array(durs), np.array(evs, dtype=float), np.array(lms))
