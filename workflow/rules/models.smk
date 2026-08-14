@@ -6,6 +6,7 @@ rule train:
         model="workflow/scripts/model.py",
         engine="workflow/scripts/engine.py",
         loss="workflow/scripts/loss.py",
+        cox="workflow/scripts/cox.py",
     output:
         "results/models/{name}.pkl",
     log:
@@ -39,6 +40,7 @@ rule eval:
         model="workflow/scripts/model.py",
         engine="workflow/scripts/engine.py",
         loss="workflow/scripts/loss.py",
+        cox="workflow/scripts/cox.py",
     output:
         "results/metrics/{name}.json",
     log:

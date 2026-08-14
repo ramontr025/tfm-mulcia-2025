@@ -29,6 +29,51 @@ model_artifact = snakemake.input.model_path
 with open(model_artifact, "rb") as f:
     artifact = pickle.load(f)
 
+arch_name = artifact.get("arch", "grud")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# 2. Parámetros del experimento desde Snakemake
+HORIZON = float(snakemake.params.horizon)
+LANDMARK_MIN = int(snakemake.params.landmark_min)
+LANDMARK_MAX = int(snakemake.params.landmark_max)
+INDEX_AGE = float(snakemake.params.index_age)
+
+# 3. Cargar secuencias de los tres splits (train, val y holdout)
+sequences_train, _, cohort_train = load_sequences(snakemake.input.train)
+sequences_val, _, cohort_val = load_sequences(snakemake.input.val)
+sequences_holdout, _, cohort_holdout = load_sequences(snakemake.input.holdout)
+
+# ── Rama de evaluación para Cox Baseline (tabular / LOCF) ──
+if arch_name == "cox":
+    from cox import evaluate_cox
+
+    model_name = getattr(snakemake.wildcards, "name", "cox")
+    results_json = evaluate_cox(
+        artifact=artifact,
+        sequences_train=sequences_train,
+        cohort_train=cohort_train,
+        sequences_val=sequences_val,
+        cohort_val=cohort_val,
+        sequences_holdout=sequences_holdout,
+        cohort_holdout=cohort_holdout,
+        landmark_min=LANDMARK_MIN,
+        landmark_max=LANDMARK_MAX,
+        index_age=INDEX_AGE,
+        horizon=HORIZON,
+        model_name=model_name,
+        device=device,
+    )
+
+    with open(snakemake.output[0], "w", encoding="utf-8") as f:
+        json.dump(results_json, f, indent=2)
+
+    print(
+        f"[{model_name}] Evaluación Cox completada. Val C-Index medio: {results_json['c_index']['val']['mean_c_index']:.4f}",
+        flush=True,
+    )
+    sys.exit(0)
+
+# ── Rama de evaluación para Modelos Secuenciales (GRU-D) ──
 lab_dim = artifact["lab_dim"]
 hidden_dim = artifact["hidden_dim"]
 vocab_size = artifact["vocab_size"]
@@ -37,8 +82,6 @@ mean_x = artifact["mean_x"]
 code_to_idx = artifact["code_to_idx"]
 state_dict = artifact["state_dict"]
 
-# 2. Reconstruir el modelo e instanciar pesajes
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model = TimeAwareGRUD(
     input_dim=lab_dim,
     vocab_size=vocab_size,
@@ -49,17 +92,6 @@ model = TimeAwareGRUD(
 ).to(device)
 model.load_state_dict(state_dict)
 model.eval()
-
-# 3. Parámetros del experimento desde Snakemake
-HORIZON = float(snakemake.params.horizon)
-LANDMARK_MIN = int(snakemake.params.landmark_min)
-LANDMARK_MAX = int(snakemake.params.landmark_max)
-INDEX_AGE = float(snakemake.params.index_age)
-
-# 4. Cargar secuencias de los tres splits (train, val y holdout)
-sequences_train, _, cohort_train = load_sequences(snakemake.input.train)
-sequences_val, _, cohort_val = load_sequences(snakemake.input.val)
-sequences_holdout, _, cohort_holdout = load_sequences(snakemake.input.holdout)
 
 # 5. Evaluar C-index a través de todos los landmarks (45 a 70) para train, val y holdout
 landmark_times = list(range(LANDMARK_MIN, LANDMARK_MAX + 1))

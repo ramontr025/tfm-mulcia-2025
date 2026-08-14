@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 # Permitir importar módulos locales desde workflow/scripts
 sys.path.append(str(Path(__file__).parent))
 
+from cox import CoxPHNet, train_cox
 from dataset import RawSequenceDatasetWithICD, raw_pad_collate_with_icd, load_sequences
 from engine import run_raw_loss_epoch_icd
 from model import TimeAwareGRUD
@@ -93,28 +94,52 @@ val_dataset_icd = RawSequenceDatasetWithICD(
     age_weight_gamma=age_weight_gamma,
 )
 
+# 5. Definición y entrenamiento según el modelo
+MODEL_REGISTRY = {
+    "grud": TimeAwareGRUD,
+    "cox": CoxPHNet,
+}
+
+if arch_name not in MODEL_REGISTRY:
+    raise ValueError(
+        f"Arquitectura desconocida '{arch_name}'. Soportadas: {list(MODEL_REGISTRY.keys())}"
+    )
+
+# ── Rama de entrenamiento para Cox Baseline (tabular / LOCF) ──
+if arch_name == "cox":
+    print("\n── Entrenando Modelo Cox Baseline ──")
+    artifact = train_cox(
+        train_dataset=train_dataset_icd,
+        val_dataset=val_dataset_icd,
+        landmark_ages=landmark_ages,
+        lab_codes=lab_codes,
+        code_to_idx=code_to_idx,
+        use_icd=bool(icd),
+        learning_rate=LEARNING_RATE,
+        weight_decay=WEIGHT_DECAY,
+        max_epochs=MAX_EPOCHS,
+        patience=PATIENCE,
+        batch_size=BATCH_SIZE,
+        event_oversample=EVENT_OVERSAMPLE,
+        device=device,
+    )
+
+    with open(snakemake.output[0], "wb") as f:
+        pickle.dump(artifact, f)
+
+    print(
+        f"[{snakemake.wildcards.name}] Artefacto Cox guardado correctamente en: {snakemake.output[0]}",
+        flush=True,
+    )
+    sys.exit(0)
+
+# ── Rama de entrenamiento para Modelos Secuenciales (GRU-D) ──
 all_labs = [s["labs"] for s in train_dataset_icd.samples]
 if all_labs:
     all_labs_concat = np.concatenate(all_labs, axis=0)
     mean_x = all_labs_concat.mean(axis=0)
 else:
     mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
-
-# 5. Definición del modelo
-
-# Registro de modelos soportados (facilita añadir LSTM, Transformer, etc. en futuros issues)
-MODEL_REGISTRY = {
-    "grud": TimeAwareGRUD,
-}
-
-arch_name = snakemake.params.arch  # Ej: "grud"
-icd = int(snakemake.params.icd)  # Ej: 1 o 0
-embed_dim = 16 if icd else 0  # La opción de ablación ICD de la config
-
-if arch_name not in MODEL_REGISTRY:
-    raise ValueError(
-        f"Arquitectura desconocida '{arch_name}'. Soportadas: {list(MODEL_REGISTRY.keys())}"
-    )
 
 ModelClass = MODEL_REGISTRY[arch_name]
 
@@ -193,6 +218,7 @@ if best_state is not None:
 print(f"\nBest val loss: {best_val_loss:.4f}")
 
 artifact = {
+    "arch": arch_name,
     "lab_dim": train_dataset_icd.lab_dim,
     "hidden_dim": HIDDEN_DIM,
     "vocab_size": vocab_size,

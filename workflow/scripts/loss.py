@@ -50,7 +50,7 @@ def cox_ph_loss(
     if weights is not None:
         sum_weights = torch.sum(events * weights)
         if sum_weights == 0:
-            loss = torch.tensor(0.0, device=risk_scores.device)
+            loss = (risk_scores * 0.0).sum()
         else:
             loss = -torch.sum(log_likelihood * events * weights) / sum_weights
     else:
