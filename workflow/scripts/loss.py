@@ -1,4 +1,4 @@
-#import de librerias
+# import de librerias
 import torch
 
 

@@ -39,7 +39,8 @@ rule all:
     input:
         expand("results/{split}/sequences.pkl", split=SPLITS),
         expand("results/metrics/{name}.json", name=list(MODELS)),
-        # issue 3:  "results/comparison.png",
+        "results/comparison.csv",
+        "results/comparison.png",
 
 
 # ── Reglas ──

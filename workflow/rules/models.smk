@@ -52,3 +52,15 @@ rule eval:
         index_age=config["cohort"]["index_age"],
     script:
         "../scripts/eval.py"
+
+
+rule compare:
+    input:
+        metrics=expand("results/metrics/{name}.json", name=list(MODELS)),
+    output:
+        csv="results/comparison.csv",
+        png="results/comparison.png",
+    log:
+        "logs/compare.log",
+    script:
+        "../scripts/compare.py"

@@ -11,6 +11,7 @@ from loss import cox_ph_loss
 
 class SubsetDataset:
     """Helper ligero para pasar una lista de samples a build_locf_matrix."""
+
     def __init__(self, samples, code_to_idx):
         self.samples = samples
         self.code_to_idx = code_to_idx
@@ -72,7 +73,7 @@ def build_locf_matrix(
 
     for i in range(n):
         sample = dataset.samples[i]
-        labs = sample["labs"]    # (T, lab_dim)
+        labs = sample["labs"]  # (T, lab_dim)
         masks = sample["masks"]  # (T, lab_dim)
         sex_male = float(sample.get("sex_male", 0.0))
 
@@ -108,6 +109,7 @@ class CoxPHNet(nn.Module):
     Modelo lineal para regresión de Cox:
     log-hazard = X @ beta
     """
+
     def __init__(self, input_dim: int):
         super().__init__()
         self.linear = nn.Linear(input_dim, 1, bias=True)
@@ -116,7 +118,9 @@ class CoxPHNet(nn.Module):
         return self.linear(x).squeeze(-1)
 
 
-def run_cox_epoch(loader: DataLoader, model: nn.Module, device: torch.device, optimizer=None):
+def run_cox_epoch(
+    loader: DataLoader, model: nn.Module, device: torch.device, optimizer=None
+):
     """
     Ejecuta una época de entrenamiento o validación para el modelo Cox tabular.
     """
@@ -192,12 +196,18 @@ def train_cox(
     median_labs = compute_lab_medians(train_dataset, lab_dim)
 
     state_dicts = {}
-    print(f"\nIniciando entrenamiento Cox para {len(landmark_ages)} landmarks (input_dim={input_dim}, use_icd={use_icd})...")
+    print(
+        f"\nIniciando entrenamiento Cox para {len(landmark_ages)} landmarks (input_dim={input_dim}, use_icd={use_icd})..."
+    )
 
     for lm in landmark_ages:
         lm_float = float(lm)
-        train_samples_lm = [s for s in train_dataset.samples if s["landmark_age"] == lm_float]
-        val_samples_lm = [s for s in val_dataset.samples if s["landmark_age"] == lm_float]
+        train_samples_lm = [
+            s for s in train_dataset.samples if s["landmark_age"] == lm_float
+        ]
+        val_samples_lm = [
+            s for s in val_dataset.samples if s["landmark_age"] == lm_float
+        ]
 
         if not train_samples_lm:
             print(f"  [Landmark {lm}] Sin muestras de entrenamiento. Omitiendo.")
@@ -217,11 +227,21 @@ def train_cox(
         train_sub = SubsetDataset(train_samples_lm, code_to_idx)
         val_sub = SubsetDataset(val_samples_lm, code_to_idx)
 
-        X_train_lm = build_locf_matrix(train_sub, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd)
-        dur_train_lm = np.array([s["duration"] for s in train_samples_lm], dtype=np.float32)
+        X_train_lm = build_locf_matrix(
+            train_sub, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
+        )
+        dur_train_lm = np.array(
+            [s["duration"] for s in train_samples_lm], dtype=np.float32
+        )
         w_train_lm = np.array([s["weight"] for s in train_samples_lm], dtype=np.float32)
 
-        X_val_lm = build_locf_matrix(val_sub, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd) if val_samples_lm else np.zeros((0, input_dim), dtype=np.float32)
+        X_val_lm = (
+            build_locf_matrix(
+                val_sub, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
+            )
+            if val_samples_lm
+            else np.zeros((0, input_dim), dtype=np.float32)
+        )
         dur_val_lm = np.array([s["duration"] for s in val_samples_lm], dtype=np.float32)
         ev_val_lm = np.array([s["event"] for s in val_samples_lm], dtype=np.float32)
         w_val_lm = np.array([s["weight"] for s in val_samples_lm], dtype=np.float32)
@@ -234,10 +254,16 @@ def train_cox(
         )
         if event_oversample > 1.0:
             sample_weights = [event_oversample if e == 1 else 1.0 for e in ev_train_lm]
-            sampler = WeightedRandomSampler(sample_weights, num_samples=len(sample_weights), replacement=True)
-            train_loader = DataLoader(train_tensors, batch_size=batch_size, sampler=sampler)
+            sampler = WeightedRandomSampler(
+                sample_weights, num_samples=len(sample_weights), replacement=True
+            )
+            train_loader = DataLoader(
+                train_tensors, batch_size=batch_size, sampler=sampler
+            )
         else:
-            train_loader = DataLoader(train_tensors, batch_size=batch_size, shuffle=True)
+            train_loader = DataLoader(
+                train_tensors, batch_size=batch_size, shuffle=True
+            )
 
         if len(val_samples_lm) > 0:
             val_tensors = TensorDataset(
@@ -251,18 +277,26 @@ def train_cox(
             val_loader = None
 
         model_lm = CoxPHNet(input_dim=input_dim).to(device)
-        optimizer = torch.optim.Adam(model_lm.parameters(), lr=learning_rate, weight_decay=weight_decay)
-        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=3)
+        optimizer = torch.optim.Adam(
+            model_lm.parameters(), lr=learning_rate, weight_decay=weight_decay
+        )
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer, mode="min", factor=0.5, patience=3
+        )
 
         best_val_loss = float("inf")
         best_state = None
         no_improve = 0
 
         for epoch in range(1, max_epochs + 1):
-            train_loss, train_ci = run_cox_epoch(train_loader, model_lm, device, optimizer=optimizer)
+            train_loss, train_ci = run_cox_epoch(
+                train_loader, model_lm, device, optimizer=optimizer
+            )
 
             if val_loader is not None:
-                val_loss, val_ci = run_cox_epoch(val_loader, model_lm, device, optimizer=None)
+                val_loss, val_ci = run_cox_epoch(
+                    val_loader, model_lm, device, optimizer=None
+                )
                 scheduler.step(val_loss)
                 target_loss = val_loss
             else:
@@ -282,7 +316,9 @@ def train_cox(
 
         state_dicts[str(lm)] = model_lm.state_dict()
 
-    print(f"-> Entrenamiento Cox finalizado. Total de modelos guardados: {len(state_dicts)}")
+    print(
+        f"-> Entrenamiento Cox finalizado. Total de modelos guardados: {len(state_dicts)}"
+    )
 
     artifact = {
         "arch": "cox",
@@ -366,7 +402,9 @@ def evaluate_cox(
             if len(ds_lm) == 0:
                 continue
 
-            X_lm = build_locf_matrix(ds_lm, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd)
+            X_lm = build_locf_matrix(
+                ds_lm, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
+            )
             durs = np.array([s["duration"] for s in ds_lm.samples], dtype=np.float32)
             evs = np.array([s["event"] for s in ds_lm.samples], dtype=np.float32)
 
@@ -409,16 +447,26 @@ def evaluate_cox(
             max_events=200,
             age_weight_gamma=1.0,
         )
-        X_train_55 = build_locf_matrix(ds_train_55, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd)
-        train_durs_55 = np.array([s["duration"] for s in ds_train_55.samples], dtype=np.float64)
-        train_evs_55 = np.array([s["event"] for s in ds_train_55.samples], dtype=np.float64)
+        X_train_55 = build_locf_matrix(
+            ds_train_55, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
+        )
+        train_durs_55 = np.array(
+            [s["duration"] for s in ds_train_55.samples], dtype=np.float64
+        )
+        train_evs_55 = np.array(
+            [s["event"] for s in ds_train_55.samples], dtype=np.float64
+        )
 
         with torch.no_grad():
-            train_risks_55 = models[55](
-                torch.tensor(X_train_55, dtype=torch.float32).to(device)
-            ).cpu().numpy()
+            train_risks_55 = (
+                models[55](torch.tensor(X_train_55, dtype=torch.float32).to(device))
+                .cpu()
+                .numpy()
+            )
 
-        H0, max_r = compute_baseline_hazard(train_risks_55, train_durs_55, train_evs_55, horizon)
+        H0, max_r = compute_baseline_hazard(
+            train_risks_55, train_durs_55, train_evs_55, horizon
+        )
 
         for split_name, seqs, cohort in [
             ("val", sequences_val, cohort_val),
@@ -433,18 +481,32 @@ def evaluate_cox(
                 max_events=200,
                 age_weight_gamma=1.0,
             )
-            X_eval_55 = build_locf_matrix(ds_eval_55, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd)
-            eval_durs_55 = np.array([s["duration"] for s in ds_eval_55.samples], dtype=np.float64)
-            eval_evs_55 = np.array([s["event"] for s in ds_eval_55.samples], dtype=np.float64)
+            X_eval_55 = build_locf_matrix(
+                ds_eval_55,
+                lab_dim,
+                median_x=median_labs,
+                use_icd=use_icd,
+                num_icd=num_icd,
+            )
+            eval_durs_55 = np.array(
+                [s["duration"] for s in ds_eval_55.samples], dtype=np.float64
+            )
+            eval_evs_55 = np.array(
+                [s["event"] for s in ds_eval_55.samples], dtype=np.float64
+            )
 
             with torch.no_grad():
-                eval_risks_55 = models[55](
-                    torch.tensor(X_eval_55, dtype=torch.float32).to(device)
-                ).cpu().numpy()
+                eval_risks_55 = (
+                    models[55](torch.tensor(X_eval_55, dtype=torch.float32).to(device))
+                    .cpu()
+                    .numpy()
+                )
 
             shifted_eval = eval_risks_55 - max_r
             pred_prob = 1.0 - np.exp(-H0 * np.exp(shifted_eval))
-            obs_event_horizon = ((eval_durs_55 <= horizon) & (eval_evs_55 == 1)).astype(float)
+            obs_event_horizon = ((eval_durs_55 <= horizon) & (eval_evs_55 == 1)).astype(
+                float
+            )
             mean_pred = float(np.mean(pred_prob))
             mean_obs = float(np.mean(obs_event_horizon))
 
