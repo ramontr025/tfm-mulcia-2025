@@ -91,5 +91,5 @@ models:
   - {name: grud,      arch: grud, icd: 1}
   - {name: grud_labs, arch: grud, icd: 0}
   - {name: cox,       arch: cox,  icd: 1}
-  - {name: cox_labs,  arch: cox,  icd: 0}
+  - {name: lstm,      arch: lstm,  icd: 1}
 

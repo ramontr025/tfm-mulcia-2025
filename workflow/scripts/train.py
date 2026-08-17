@@ -1,3 +1,4 @@
+from model import SimpleLSTM
 import copy
 import pickle
 import sys
@@ -95,16 +96,6 @@ val_dataset_icd = RawSequenceDatasetWithICD(
 )
 
 # 5. Definición y entrenamiento según el modelo
-MODEL_REGISTRY = {
-    "grud": TimeAwareGRUD,
-    "cox": CoxPHNet,
-}
-
-if arch_name not in MODEL_REGISTRY:
-    raise ValueError(
-        f"Arquitectura desconocida '{arch_name}'. Soportadas: {list(MODEL_REGISTRY.keys())}"
-    )
-
 # ── Rama de entrenamiento para Cox Baseline (tabular / LOCF) ──
 if arch_name == "cox":
     print("\n── Entrenando Modelo Cox Baseline ──")
@@ -133,7 +124,7 @@ if arch_name == "cox":
     )
     sys.exit(0)
 
-# ── Rama de entrenamiento para Modelos Secuenciales (GRU-D) ──
+# ── Rama de entrenamiento para Modelos Secuenciales (GRU-D, LSTM) ──
 all_labs = [s["labs"] for s in train_dataset_icd.samples]
 if all_labs:
     all_labs_concat = np.concatenate(all_labs, axis=0)
@@ -141,9 +132,31 @@ if all_labs:
 else:
     mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
 
-ModelClass = MODEL_REGISTRY[arch_name]
+def build_model(arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2):
+    if arch == "grud":
+        return TimeAwareGRUD(
+            input_dim=input_dim,
+            vocab_size=vocab_size,
+            mean_x=mean_x,
+            embed_dim=embed_dim,
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+        )
+    elif arch == "lstm":
+        return SimpleLSTM(
+            input_dim=input_dim,
+            vocab_size=vocab_size,
+            mean_x=mean_x,
+            embed_dim=embed_dim,
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+        )
+    else:
+        raise ValueError(f"Arquitectura secuencial no soportada: {arch}")
 
-model = ModelClass(
+# Instanciación
+model = build_model(
+    arch=arch_name,
     input_dim=train_dataset_icd.lab_dim,
     vocab_size=vocab_size,
     mean_x=mean_x,
@@ -151,6 +164,7 @@ model = ModelClass(
     hidden_dim=HIDDEN_DIM,
     dropout=0.2,
 ).to(device)
+
 
 
 # 6. Entrenamiento
