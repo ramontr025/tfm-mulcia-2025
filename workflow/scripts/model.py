@@ -194,10 +194,10 @@ class SimpleLSTM(nn.Module):
         # Ajuste dinámico de dimensiones de entrada de la celda GRU
         if self.embed_static_icd:
             # Caso Estático: El embedding no entra en la secuencia temporal de la GRU
-            lstm_input_dim = input_dim + input_dim + 2
+            lstm_input_dim = input_dim + input_dim + 1
         else:
             # Caso Secuencial: El embedding se concatena en cada timestep
-            lstm_input_dim = input_dim + input_dim + 2 + embed_dim
+            lstm_input_dim = input_dim + input_dim + 1 + embed_dim
 
         self.lstm_cell = nn.LSTMCell(lstm_input_dim, hidden_dim)
 
@@ -255,12 +255,14 @@ class SimpleLSTM(nn.Module):
 
             # ── LSTM cell update ──
             sex_t = sex_male[:, None]  # (B, 1)
-            time_t = (
-                time_since_index[:, t : t + 1]
-                if time_since_index is not None
-                else torch.zeros(batch_size, 1, device=device)
-            )
-            parts = [x_hat, m_t, sex_t, time_t]
+            # time_t = (
+            #     time_since_index[:, t : t + 1]
+            #     if time_since_index is not None
+            #     else torch.zeros(batch_size, 1, device=device)
+            # )
+            # parts = [x_hat, m_t, sex_t, time_t]  No time aware
+
+            parts = [x_hat, m_t, sex_t]
 
             # Solo añadimos el embedding al paso temporal si no es estático
             if bag_embeds is not None and not embed_static_icd:
