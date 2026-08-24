@@ -12,17 +12,18 @@ rule train:
     log:
         "logs/train/{name}.log",
     params:
+        params:
         arch=lambda wc: MODELS[wc.name]["arch"],
         icd=lambda wc: MODELS[wc.name]["icd"],
-        hidden_dim=config["training"]["hidden_dim"],
-        batch_size=config["training"]["batch_size"],
-        learning_rate=config["training"]["learning_rate"],
-        weight_decay=config["training"]["weight_decay"],
-        max_epochs=config["training"]["max_epochs"],
-        patience=config["training"]["patience"],
-        event_oversample=config["training"]["event_oversample"],
-        max_events=config["training"]["max_seq_len"],
-        age_weight_gamma=config["training"]["age_weight_gamma"],
+        hidden_dim=lambda wc: MODELS[wc.name].get("hidden_dim"),  # None para cox
+        batch_size=lambda wc: MODELS[wc.name]["batch_size"],
+        learning_rate=lambda wc: MODELS[wc.name]["learning_rate"],
+        weight_decay=lambda wc: MODELS[wc.name]["weight_decay"],
+        max_epochs=lambda wc: MODELS[wc.name]["max_epochs"],
+        patience=lambda wc: MODELS[wc.name]["patience"],
+        event_oversample=lambda wc: MODELS[wc.name]["event_oversample"],
+        max_events=lambda wc: MODELS[wc.name]["max_seq_len"],
+        age_weight_gamma=lambda wc: MODELS[wc.name]["age_weight_gamma"],
         index_age=config["cohort"]["index_age"],
         landmark_min=config["cohort"]["landmark_min"],
         landmark_max=config["cohort"]["landmark_max"],

@@ -73,23 +73,59 @@ features:
   excluded_icd_initials: ["O", "Z", "V", "W", "X", "Y"]
   outcome_icd_prefixes: ["C33", "C34"]
 
-# ── training hyperparameters ──
-training:
-  hidden_dim: 32
-  batch_size: 128
-  learning_rate: 0.001
-  weight_decay: 0.01
-  max_epochs: 5
-  patience: 5
-  event_oversample: 3.0
-  max_seq_len: 200
-  age_weight_gamma: 1.0
 
 
 # ── models to train and evaluate ──
 models:
-  - {name: grud,      arch: grud, icd: 1}
-  - {name: grud_labs, arch: grud, icd: 0}
-  - {name: cox,       arch: cox,  icd: 1}
-  - {name: lstm,      arch: lstm,  icd: 1}
+  - name: grud
+    arch: grud
+    icd: 1
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 5
+    patience: 5
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+
+  - name: grud_labs
+    arch: grud
+    icd: 0
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 5
+    patience: 5
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+
+  - name: cox
+    arch: cox
+    icd: 1
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 5
+    patience: 5
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+    # sin hidden_dim: cox no tiene celda recurrente
+
+  - name: lstm
+    arch: lstm
+    icd: 1
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 5
+    patience: 5
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
 

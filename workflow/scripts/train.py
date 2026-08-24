@@ -33,7 +33,6 @@ arch_name = snakemake.params.arch
 icd = int(snakemake.params.icd)
 embed_dim = 16 if icd else 0
 
-HIDDEN_DIM = int(snakemake.params.hidden_dim)
 BATCH_SIZE = int(snakemake.params.batch_size)
 LEARNING_RATE = float(snakemake.params.learning_rate)
 WEIGHT_DECAY = float(snakemake.params.weight_decay)
@@ -125,6 +124,9 @@ if arch_name == "cox":
     sys.exit(0)
 
 # ── Rama de entrenamiento para Modelos Secuenciales (GRU-D, LSTM) ──
+
+HIDDEN_DIM = int(snakemake.params.hidden_dim) # Lo leemos aqui para que no explote en el caso de Cox
+
 all_labs = [s["labs"] for s in train_dataset_icd.samples]
 if all_labs:
     all_labs_concat = np.concatenate(all_labs, axis=0)
