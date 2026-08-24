@@ -12,7 +12,7 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 # Permitir importar módulos locales desde workflow/scripts
 sys.path.append(str(Path(__file__).parent))
 
-from cox import CoxPHNet, train_cox
+from cox import train_cox
 from dataset import RawSequenceDatasetWithICD, raw_pad_collate_with_icd, load_sequences
 from engine import run_raw_loss_epoch_icd
 from model import TimeAwareGRUD
@@ -125,7 +125,9 @@ if arch_name == "cox":
 
 # ── Rama de entrenamiento para Modelos Secuenciales (GRU-D, LSTM) ──
 
-HIDDEN_DIM = int(snakemake.params.hidden_dim) # Lo leemos aqui para que no explote en el caso de Cox
+HIDDEN_DIM = int(
+    snakemake.params.hidden_dim
+)  # Lo leemos aqui para que no explote en el caso de Cox
 
 all_labs = [s["labs"] for s in train_dataset_icd.samples]
 if all_labs:
@@ -134,7 +136,10 @@ if all_labs:
 else:
     mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
 
-def build_model(arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2):
+
+def build_model(
+    arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2
+):
     if arch == "grud":
         return TimeAwareGRUD(
             input_dim=input_dim,
@@ -156,6 +161,7 @@ def build_model(arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, drop
     else:
         raise ValueError(f"Arquitectura secuencial no soportada: {arch}")
 
+
 # Instanciación
 model = build_model(
     arch=arch_name,
@@ -166,7 +172,6 @@ model = build_model(
     hidden_dim=HIDDEN_DIM,
     dropout=0.2,
 ).to(device)
-
 
 
 # 6. Entrenamiento

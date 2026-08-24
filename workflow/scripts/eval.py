@@ -82,7 +82,10 @@ mean_x = artifact["mean_x"]
 code_to_idx = artifact["code_to_idx"]
 state_dict = artifact["state_dict"]
 
-def build_model(arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2):
+
+def build_model(
+    arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2
+):
     if arch == "grud":
         return TimeAwareGRUD(
             input_dim=input_dim,
@@ -103,6 +106,7 @@ def build_model(arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, drop
         )
     else:
         raise ValueError(f"Arquitectura desconocida: {arch}")
+
 
 model = build_model(
     arch=arch_name,

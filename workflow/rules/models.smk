@@ -12,7 +12,6 @@ rule train:
     log:
         "logs/train/{name}.log",
     params:
-        params:
         arch=lambda wc: MODELS[wc.name]["arch"],
         icd=lambda wc: MODELS[wc.name]["icd"],
         hidden_dim=lambda wc: MODELS[wc.name].get("hidden_dim"),  # None para cox
