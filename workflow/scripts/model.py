@@ -157,3 +157,55 @@ class TimeAwareGRUD(nn.Module):
         last_risk = all_risks[batch_idx, last_idx]  # (B,)
 
         return last_risk, all_risks, h_states
+
+
+class TransformerVisitToken(nn.Module):
+    def __init__(
+        self,
+        input_dim: int,
+        vocab_size: int = 0,
+        mean_x: np.ndarray | None = None,
+        embed_dim: int = 0,
+        hidden_dim: int = 32,
+        dropout: float = 0.2,
+        embed_static_icd: bool = False,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.embed_dim = embed_dim
+        self.embed_static_icd = embed_static_icd
+
+        if mean_x is None:
+            mean_x = np.zeros(input_dim, dtype=np.float32)
+        self.register_buffer("mean_x", torch.tensor(mean_x, dtype=torch.float32))
+
+        if embed_dim > 0 and vocab_size > 0:
+            self.embedding = nn.EmbeddingBag(
+                vocab_size, embed_dim, mode="mean", padding_idx=0
+            )
+        else:
+            self.embedding = None
+
+        if embed_static_icd:
+            enc_input_dim = input_dim + input_dim + 2
+        else:
+            enc_input_dim = input_dim + input_dim + 2 + embed_dim
+
+        self.enc_layer = nn.TransformerEncoderLayer(
+            d_model=input_dim,
+            nhead=enc_nhead,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            activation="relu",
+            batch_first=True,
+            norm_first=True,
+        )
+        
+        self.gru_cell = nn.GRUCell(gru_input_dim, hidden_dim)
+        self.dropout = nn.Dropout(dropout)
+
+        if self.embed_static_icd and embed_dim > 0 and vocab_size > 0:
+            self.linear = nn.Linear(hidden_dim + embed_dim, 1)
+        else:
+            self.linear = nn.Linear(hidden_dim, 1)

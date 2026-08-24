@@ -41,8 +41,10 @@ rule all:
         expand("results/metrics/{name}.json", name=list(MODELS)),
         "results/comparison.csv",
         "results/comparison.png",
+        "results/eda",
 
 
 # ── Reglas ──
 include: "rules/ingest.smk"
 include: "rules/models.smk"
+include: "rules/eda.smk"
