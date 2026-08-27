@@ -159,6 +159,98 @@ class TimeAwareGRUD(nn.Module):
         return last_risk, all_risks, h_states
 
 
+class SimpleLSTM(nn.Module):
+    """LSTM básica sin decaimento para baseline."""
+
+    def __init__(
+        self,
+        input_dim: int,
+        vocab_size: int = 0,
+        mean_x: np.ndarray | None = None,
+        embed_dim: int = 0,
+        hidden_dim: int = 32,
+        dropout: float = 0.2,
+    ):
+        super().__init__()
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        self.dropout = nn.Dropout(dropout)
+
+        if mean_x is None:
+            mean_x = np.zeros(input_dim, dtype=np.float32)
+        self.register_buffer("mean_x", torch.tensor(mean_x, dtype=torch.float32))
+
+        # Optional ICD-10 embedding
+        if embed_dim > 0 and vocab_size > 0:
+            self.embedding = nn.EmbeddingBag(
+                vocab_size, embed_dim, mode="mean", padding_idx=0
+            )
+        else:
+            self.embedding = None
+
+        lstm_input_dim = input_dim + input_dim + 1 + embed_dim
+        self.lstm_cell = nn.LSTMCell(lstm_input_dim, hidden_dim)
+        self.linear = nn.Linear(hidden_dim, 1)
+
+    def forward(
+        self,
+        x,  # (B, T, D)  padded lab values
+        mask,  # (B, T, D)  observation masks
+        deltas,  # (B, T)     inter-observation gaps in years
+        lengths,  # (B,)       true sequence lengths
+        sex_male,  # (B,)
+        time_since_index=None,  # (B, T)  optional
+        flat_codes=None,  # EmbeddingBag input  (extension)
+        offsets=None,  # EmbeddingBag offsets (extension)
+    ):
+        batch_size, max_len, _ = x.shape
+        device = x.device
+
+        # Procesamiento del Embedding de diagnósticos
+        bag_embeds = None
+        if self.embedding is not None and flat_codes is not None:
+            # Retorna un vector por cada timestep de la secuencia: (B, T, embed_dim)
+            bag_embeds = self.embedding(flat_codes, offsets).view(
+                batch_size, max_len, -1
+            )
+
+        h_t = torch.zeros(batch_size, self.hidden_dim, device=device)
+        c_t = torch.zeros(batch_size, self.hidden_dim, device=device)
+        outputs = []
+        h_states = []
+
+        for t in range(max_len):
+            x_t = x[:, t, :]  # (B, D)  — 0 where lab not observed
+            m_t = mask[:, t, :]  # (B, D)
+
+            # Impute missing values with the mean
+            x_hat = m_t * x_t + (1.0 - m_t) * self.mean_x
+
+            # ── LSTM cell update ──
+            sex_t = sex_male[:, None]  # (B, 1)
+            parts = [x_hat, m_t, sex_t]
+
+            # Solo añadimos el embedding al paso temporal si no es estático
+            if bag_embeds is not None:
+                parts.append(bag_embeds[:, t, :])
+
+            input_t = torch.cat(parts, dim=-1)
+            h_t, c_t = self.lstm_cell(input_t, (h_t, c_t))
+
+            outputs.append(self.linear(self.dropout(h_t)))
+            h_states.append(h_t)
+
+        all_risks = torch.stack(outputs, dim=1).squeeze(-1)  # (B, T)
+        h_states = torch.stack(h_states, dim=1)  # (B, T, H)
+
+        # Risk score at each patient's last valid (non-padded) timestep
+        last_idx = (lengths - 1).clamp(min=0)
+        batch_idx = torch.arange(batch_size, device=device)
+        last_risk = all_risks[batch_idx, last_idx]  # (B,)
+
+        return last_risk, all_risks, h_states
+
+
 class TransformerVisitToken(nn.Module):
     def __init__(
         self,
@@ -209,3 +301,4 @@ class TransformerVisitToken(nn.Module):
             self.linear = nn.Linear(hidden_dim + embed_dim, 1)
         else:
             self.linear = nn.Linear(hidden_dim, 1)
+

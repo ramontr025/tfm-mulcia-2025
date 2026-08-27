@@ -14,7 +14,7 @@ sys.path.append(str(Path(__file__).parent))
 
 from dataset import RawSequenceDatasetWithICD, raw_pad_collate_with_icd, load_sequences
 from engine import collect_raw_outputs, compute_baseline_hazard
-from model import TimeAwareGRUD
+from model import TimeAwareGRUD, SimpleLSTM
 
 if TYPE_CHECKING:
     # Solo para el linter/IDE (tipo + autocompletado). En tiempo de ejecucion
@@ -82,7 +82,34 @@ mean_x = artifact["mean_x"]
 code_to_idx = artifact["code_to_idx"]
 state_dict = artifact["state_dict"]
 
-model = TimeAwareGRUD(
+
+def build_model(
+    arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2
+):
+    if arch == "grud":
+        return TimeAwareGRUD(
+            input_dim=input_dim,
+            vocab_size=vocab_size,
+            mean_x=mean_x,
+            embed_dim=embed_dim,
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+        )
+    elif arch == "lstm":
+        return SimpleLSTM(
+            input_dim=input_dim,
+            vocab_size=vocab_size,
+            mean_x=mean_x,
+            embed_dim=embed_dim,
+            hidden_dim=hidden_dim,
+            dropout=dropout,
+        )
+    else:
+        raise ValueError(f"Arquitectura desconocida: {arch}")
+
+
+model = build_model(
+    arch=arch_name,
     input_dim=lab_dim,
     vocab_size=vocab_size,
     mean_x=mean_x,
@@ -90,6 +117,7 @@ model = TimeAwareGRUD(
     hidden_dim=hidden_dim,
     dropout=0.2,
 ).to(device)
+
 model.load_state_dict(state_dict)
 model.eval()
 
