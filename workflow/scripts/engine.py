@@ -163,3 +163,125 @@ def collect_raw_outputs(loader, model, device):
             evs.extend(events.numpy())
             lms.extend(landmarks.numpy())
     return (np.array(risks), np.array(durs), np.array(evs, dtype=float), np.array(lms))
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STraTS Engine Functions
+# ─────────────────────────────────────────────────────────────────────────────
+
+def run_strats_epoch(loader, model, device, optimizer=None):
+    """
+    One forward pass over the dataset for STraTS model.
+
+    Returns (mean_loss, c_index).
+    If optimizer is not None, also runs backward + step (training mode).
+
+    Batch format from strats_pad_collate:
+    (values, features, times, time_since_index, padding_mask, lengths,
+     sex_male, durations, events, landmarks, weights, ids)
+    """
+    is_train = optimizer is not None
+    model.train() if is_train else model.eval()
+
+    total_loss = 0.0
+    all_risks, all_dur, all_ev = [], [], []
+
+    ctx = torch.enable_grad() if is_train else torch.no_grad()
+    with ctx:
+        for batch in loader:
+            (
+                values,
+                features,
+                times,
+                time_since_index,
+                padding_mask,
+                lengths,
+                sex_male,
+                durations,
+                events,
+                landmarks,
+                weights,
+                ids,
+            ) = batch
+
+            values = values.to(device)
+            features = features.to(device)
+            times = times.to(device)
+            time_since_index = time_since_index.to(device)
+            padding_mask = padding_mask.to(device)
+            lengths = lengths.to(device)
+            sex_male = sex_male.to(device)
+            durations = durations.to(device)
+            events = events.to(device)
+            weights = weights.to(device)
+
+            (risk_scores, _, _) = model(
+                values=values,
+                features=features,
+                times=times,
+                time_since_index=time_since_index,
+                padding_mask=padding_mask,
+                lengths=lengths,
+                sex_male=sex_male,
+            )
+
+            loss = cox_ph_loss(risk_scores, durations, events, weights)
+
+            if is_train:
+                optimizer.zero_grad()
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+                optimizer.step()
+
+            total_loss += loss.item()
+            all_risks.extend(risk_scores.detach().cpu().numpy())
+            all_dur.extend(durations.cpu().numpy())
+            all_ev.extend(events.cpu().numpy())
+
+    mean_loss = total_loss / max(len(loader), 1)
+
+    ci = concordance_index(
+        np.array(all_dur), -np.array(all_risks), np.array(all_ev, dtype=bool)
+    )
+    return mean_loss, ci
+
+
+def collect_strats_outputs(loader, model, device):
+    """
+    Collect STraTS model outputs over a full loader.
+
+    Returns (risks, durations, events, landmarks) as numpy arrays.
+    """
+    model.eval()
+    risks, durs, evs, lms = [], [], [], []
+    with torch.no_grad():
+        for batch in loader:
+            (
+                values,
+                features,
+                times,
+                time_since_index,
+                padding_mask,
+                lengths,
+                sex_male,
+                durations,
+                events,
+                landmarks,
+                weights,
+                ids,
+            ) = batch
+
+            r, _, _ = model(
+                values=values.to(device),
+                features=features.to(device),
+                times=times.to(device),
+                time_since_index=time_since_index.to(device),
+                padding_mask=padding_mask.to(device),
+                lengths=lengths.to(device),
+                sex_male=sex_male.to(device),
+            )
+            risks.extend(r.cpu().numpy())
+            durs.extend(durations.numpy())
+            evs.extend(events.numpy())
+            lms.extend(landmarks.numpy())
+    return (np.array(risks), np.array(durs), np.array(evs, dtype=float), np.array(lms))
