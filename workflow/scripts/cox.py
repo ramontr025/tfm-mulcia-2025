@@ -5,7 +5,6 @@ import torch.nn as nn
 from lifelines.utils import concordance_index
 from torch.utils.data import DataLoader, TensorDataset, WeightedRandomSampler
 
-from engine import compute_baseline_hazard
 from loss import cox_ph_loss
 
 
@@ -335,24 +334,19 @@ def train_cox(
     return artifact
 
 
-def evaluate_cox(
+def predict_cox_landmarks(
     artifact: dict,
-    sequences_train: dict,
-    cohort_train,
-    sequences_val: dict,
-    cohort_val,
-    sequences_holdout: dict,
-    cohort_holdout,
-    landmark_min: int,
-    landmark_max: int,
+    seqs: dict,
+    cohort,
+    landmark_times: list,
     index_age: float,
-    horizon: float,
-    model_name: str,
     device: torch.device = None,
-) -> dict:
+):
     """
-    Evalúa el conjunto de modelos Cox por landmark sobre train, val y holdout.
-    Calcula el C-index para cada landmark y la calibración en landmark 55.
+    Reconstruye los modelos Cox por landmark del artefacto (uno por edad) y devuelve
+    sus predicciones concatenadas en el mismo formato que `engine.collect_raw_outputs`:
+    (risks, durs, evs, lms, ids). Así eval.py puede tratar Cox igual que los modelos
+    secuenciales (GRU-D/LSTM) sin una rama de evaluación separada.
     """
     from dataset import RawSequenceDatasetWithICD
 
@@ -367,163 +361,59 @@ def evaluate_cox(
     code_to_idx = artifact["code_to_idx"]
     state_dicts = artifact.get("state_dicts", {})
 
-    landmark_times = list(range(landmark_min, landmark_max + 1))
+    all_risks, all_durs, all_evs, all_lms, all_ids = [], [], [], [], []
 
-    # Reconstruir modelos para cada landmark
-    models = {}
     for lm in landmark_times:
         lm_str = str(lm)
-        if lm_str in state_dicts:
-            m = CoxPHNet(input_dim=input_dim).to(device)
-            m.load_state_dict(state_dicts[lm_str])
-            m.eval()
-            models[lm] = m
+        if lm_str not in state_dicts:
+            continue
 
-    metrics_by_split = {}
-    for split_name, seqs, cohort in [
-        ("train", sequences_train, cohort_train),
-        ("val", sequences_val, cohort_val),
-        ("holdout", sequences_holdout, cohort_holdout),
-    ]:
-        c_indices_by_lm = {}
-        for lm in landmark_times:
-            if lm not in models:
-                continue
+        model_lm = CoxPHNet(input_dim=input_dim).to(device)
+        model_lm.load_state_dict(state_dicts[lm_str])
+        model_lm.eval()
 
-            ds_lm = RawSequenceDatasetWithICD(
-                sequences=seqs,
-                cohort_df=cohort,
-                landmark_ages=[lm],
-                index_age=index_age,
-                code_to_idx=code_to_idx,
-                max_events=200,
-                age_weight_gamma=1.0,
-            )
-            if len(ds_lm) == 0:
-                continue
-
-            X_lm = build_locf_matrix(
-                ds_lm, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
-            )
-            durs = np.array([s["duration"] for s in ds_lm.samples], dtype=np.float32)
-            evs = np.array([s["event"] for s in ds_lm.samples], dtype=np.float32)
-
-            with torch.no_grad():
-                x_tensor = torch.tensor(X_lm, dtype=torch.float32).to(device)
-                risks = models[lm](x_tensor).cpu().numpy()
-
-            n_samples = len(ds_lm)
-            n_events = int(np.sum(evs))
-            if n_events > 0:
-                ci_lm = float(concordance_index(durs, -risks, evs.astype(bool)))
-            else:
-                ci_lm = 0.5
-
-            c_indices_by_lm[str(lm)] = {
-                "n_samples": n_samples,
-                "n_events": n_events,
-                "c_index": float(ci_lm),
-            }
-
-        mean_ci = (
-            float(np.mean([item["c_index"] for item in c_indices_by_lm.values()]))
-            if c_indices_by_lm
-            else 0.0
-        )
-        metrics_by_split[split_name] = {
-            "mean_c_index": mean_ci,
-            "landmarks": c_indices_by_lm,
-        }
-
-    # Calibración en landmark 55
-    calibration_results = {}
-    if 55 in models:
-        ds_train_55 = RawSequenceDatasetWithICD(
-            sequences=sequences_train,
-            cohort_df=cohort_train,
-            landmark_ages=[55],
+        ds_lm = RawSequenceDatasetWithICD(
+            sequences=seqs,
+            cohort_df=cohort,
+            landmark_ages=[lm],
             index_age=index_age,
             code_to_idx=code_to_idx,
             max_events=200,
             age_weight_gamma=1.0,
         )
-        X_train_55 = build_locf_matrix(
-            ds_train_55, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
-        )
-        train_durs_55 = np.array(
-            [s["duration"] for s in ds_train_55.samples], dtype=np.float64
-        )
-        train_evs_55 = np.array(
-            [s["event"] for s in ds_train_55.samples], dtype=np.float64
-        )
+        if len(ds_lm) == 0:
+            continue
 
+        X_lm = build_locf_matrix(
+            ds_lm, lab_dim, median_x=median_labs, use_icd=use_icd, num_icd=num_icd
+        )
         with torch.no_grad():
-            train_risks_55 = (
-                models[55](torch.tensor(X_train_55, dtype=torch.float32).to(device))
-                .cpu()
-                .numpy()
-            )
+            x_tensor = torch.tensor(X_lm, dtype=torch.float32).to(device)
+            risks_lm = model_lm(x_tensor).cpu().numpy()
 
-        H0, max_r = compute_baseline_hazard(
-            train_risks_55, train_durs_55, train_evs_55, horizon
+        n_lm = len(ds_lm)
+        all_risks.append(risks_lm.astype(np.float64))
+        all_durs.append(
+            np.array([s["duration"] for s in ds_lm.samples], dtype=np.float64)
+        )
+        all_evs.append(np.array([s["event"] for s in ds_lm.samples], dtype=np.float64))
+        all_lms.append(np.full(n_lm, float(lm), dtype=np.float64))
+        all_ids.append(np.array([s["pid"] for s in ds_lm.samples], dtype=object))
+
+    if not all_risks:
+        empty_f = np.array([], dtype=np.float64)
+        return (
+            empty_f,
+            empty_f.copy(),
+            empty_f.copy(),
+            empty_f.copy(),
+            np.array([], dtype=object),
         )
 
-        for split_name, seqs, cohort in [
-            ("val", sequences_val, cohort_val),
-            ("holdout", sequences_holdout, cohort_holdout),
-        ]:
-            ds_eval_55 = RawSequenceDatasetWithICD(
-                sequences=seqs,
-                cohort_df=cohort,
-                landmark_ages=[55],
-                index_age=index_age,
-                code_to_idx=code_to_idx,
-                max_events=200,
-                age_weight_gamma=1.0,
-            )
-            X_eval_55 = build_locf_matrix(
-                ds_eval_55,
-                lab_dim,
-                median_x=median_labs,
-                use_icd=use_icd,
-                num_icd=num_icd,
-            )
-            eval_durs_55 = np.array(
-                [s["duration"] for s in ds_eval_55.samples], dtype=np.float64
-            )
-            eval_evs_55 = np.array(
-                [s["event"] for s in ds_eval_55.samples], dtype=np.float64
-            )
-
-            with torch.no_grad():
-                eval_risks_55 = (
-                    models[55](torch.tensor(X_eval_55, dtype=torch.float32).to(device))
-                    .cpu()
-                    .numpy()
-                )
-
-            shifted_eval = eval_risks_55 - max_r
-            pred_prob = 1.0 - np.exp(-H0 * np.exp(shifted_eval))
-            obs_event_horizon = ((eval_durs_55 <= horizon) & (eval_evs_55 == 1)).astype(
-                float
-            )
-            mean_pred = float(np.mean(pred_prob))
-            mean_obs = float(np.mean(obs_event_horizon))
-
-            calibration_results[split_name] = {
-                "mean_pred_prob": mean_pred,
-                "mean_obs_rate": mean_obs,
-            }
-    else:
-        H0, max_r = 0.0, 0.0
-
-    results_json = {
-        "model_name": model_name,
-        "c_index": metrics_by_split,
-        "landmark_55_calibration": {
-            "H0_train": float(H0),
-            "max_r_train": float(max_r),
-            "splits": calibration_results,
-        },
-    }
-    return results_json
+    return (
+        np.concatenate(all_risks),
+        np.concatenate(all_durs),
+        np.concatenate(all_evs),
+        np.concatenate(all_lms),
+        np.concatenate(all_ids),
+    )

@@ -50,6 +50,10 @@ rule eval:
         landmark_min=config["cohort"]["landmark_min"],
         landmark_max=config["cohort"]["landmark_max"],
         index_age=config["cohort"]["index_age"],
+        boot_n=config["bootstrap"]["n_boot"],
+        boot_n_pooled=config["bootstrap"]["n_boot_pooled"],
+        boot_seed=config["bootstrap"]["seed"],
+        boot_landmarks=config["bootstrap"]["landmarks"],
     script:
         "../scripts/eval.py"
 
@@ -57,9 +61,14 @@ rule eval:
 rule compare:
     input:
         metrics=expand("results/metrics/{name}.json", name=list(MODELS)),
+        compare="workflow/scripts/compare.py",
     output:
         csv="results/comparison.csv",
         png="results/comparison.png",
+        # figura central para paper/memoria (los PNG por metrica se escriben como
+        # subproductos en el mismo directorio, sin declarar)
+        main_png="results/figure_main.png",
+        main_pdf="results/figure_main.pdf",
     log:
         "logs/compare.log",
     script:

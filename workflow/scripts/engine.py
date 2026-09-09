@@ -127,10 +127,11 @@ def collect_raw_outputs(loader, model, device):
     """
     Collect model outputs over a full loader.
 
-    Returns (risks, durations, events, landmarks) as numpy arrays.
+    Returns (risks, durations, events, landmarks, patient_ids) as numpy arrays
+    (patient_ids as an object array of strings, for patient-level bootstrap CIs).
     """
     model.eval()
-    risks, durs, evs, lms = [], [], [], []
+    risks, durs, evs, lms, pids = [], [], [], [], []
     with torch.no_grad():
         for batch in loader:
             (
@@ -162,4 +163,11 @@ def collect_raw_outputs(loader, model, device):
             durs.extend(durations.numpy())
             evs.extend(events.numpy())
             lms.extend(landmarks.numpy())
-    return (np.array(risks), np.array(durs), np.array(evs, dtype=float), np.array(lms))
+            pids.extend(ids)
+    return (
+        np.array(risks),
+        np.array(durs),
+        np.array(evs, dtype=float),
+        np.array(lms),
+        np.array(pids, dtype=object),
+    )

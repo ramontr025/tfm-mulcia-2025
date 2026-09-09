@@ -75,6 +75,17 @@ features:
 
 
 
+# ── intervalos de confianza (eval, issue 2) ──
+# Los dos n_boot van separados porque su coste por replica es muy distinto: el de
+# por landmark evalua un landmark, el agrupado (cluster) los recorre los 26.
+bootstrap:
+  n_boot: 200          # replicas del bootstrap por landmark
+  n_boot_pooled: 100   # replicas del cluster bootstrap agrupado (mas caro por replica)
+  seed: 0
+  landmarks: "all"     # "all" = landmark_min..landmark_max de cohort
+
+
+
 # ── models to train and evaluate ──
 models:
   - name: grud

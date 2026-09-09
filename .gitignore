@@ -15,6 +15,9 @@
 /results/
 /out/
 
+# agents
+/spec/
+
 # logs/: ignore everything inside recursively (files AND subdirectories),
 # keep only the top-level folder tracked via .gitkeep.
 /logs/*
