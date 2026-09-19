@@ -120,8 +120,8 @@ models:
     batch_size: 128
     learning_rate: 0.001
     weight_decay: 0.01
-    max_epochs: 5
-    patience: 5
+    max_epochs: 100
+    patience: 20
     event_oversample: 3.0
     max_seq_len: 200
     age_weight_gamma: 1.0
