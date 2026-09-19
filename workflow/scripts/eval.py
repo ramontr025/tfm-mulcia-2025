@@ -59,7 +59,7 @@ def _compute_metrics(
     evs_sub = np.asarray(evs_sub, dtype=np.float64)
     n = int(len(risks_sub))
     n_events = int(np.sum(evs_sub))
-
+    # Inicializamos un diccionario para guardar los resultados
     out = {
         "n": n,
         "n_events": n_events,
@@ -77,10 +77,10 @@ def _compute_metrics(
     }
     if n == 0:
         return out
-
+    # Construimos el array estructurado de supervivencia
     y_test = Surv.from_arrays(event=evs_sub.astype(bool), time=durs_sub)
-
-    # C-index de Harrell (con conteos, para el agrupado exacto posterior)
+    
+    # C-index de Harrell, guardando los conteos para el bootstrap de C-index IPCW
     if n_events > 0:
         ci, conc, disc, tied_risk, _tied_time = concordance_index_censored(
             evs_sub.astype(bool), durs_sub, risks_sub
@@ -91,12 +91,12 @@ def _compute_metrics(
         out["tied_risk"] = int(tied_risk)
         out["n_comparable"] = int(conc + disc + tied_risk)
     else:
-        out["c_index"] = 0.5
+        out["c_index"] = 0.5 # En caso de que no haya eventos, el c-index convenimos 0.5 de C-Index (aleatorio)
 
-    # AUROC(t) acumulativo/dinámico evaluado exactamente en el horizonte clínico
+    # AUROC(t)
     try:
-        auc_t = cumulative_dynamic_auc(y_train, y_test, risks_sub, times=[horizon])[0]
-        out["auroc"] = float(auc_t[0])
+        auc_t = cumulative_dynamic_auc(y_train, y_test, risks_sub, times=[horizon])[0] 
+        out["auroc"] = float(auc_t[0]) # cumulative_dynamic_auc devuelve un par (auroc(t), mean_auroc), por ello seleccionamos del primer elemento del par el primer elemento temporal (solo hemos pedido un horizonte temporal)
     except ValueError as e:
         warn(f"[warn] AUROC no definido en este subconjunto (n={n}): {e}")
 
@@ -108,18 +108,14 @@ def _compute_metrics(
     except ValueError as e:
         warn(f"[warn] C-index IPCW no definido en este subconjunto (n={n}): {e}")
 
-    # Brier IPCW en el horizonte (Graf/Schoop) + IPA frente al modelo nulo.
+    # Brier IPCW en el horizon + IPA
     # Probabilidad de supervivencia desde el Breslow fijado en train:
-    #   S(t|x) = exp(-H0(t) * exp(risk - maxr)) ;  S_null(t) = exp(-H0_null)
     try:
         surv_prob_model = np.exp(-h0 * np.exp(risks_sub - maxr))
         surv_prob_null = np.full(n, np.exp(-h0_null))
-        brier_model = brier_score(y_train, y_test, surv_prob_model[:, None], [horizon])[
-            1
-        ][0]
-        brier_null = brier_score(y_train, y_test, surv_prob_null[:, None], [horizon])[
-            1
-        ][0]
+
+        brier_model = brier_score(y_train, y_test, surv_prob_model[:, None], [horizon])[1][0]
+        brier_null = brier_score(y_train, y_test, surv_prob_null[:, None], [horizon])[1][0]
         out["brier"] = float(brier_model)
         out["ipa"] = float(1.0 - brier_model / brier_null) if brier_null > 0 else np.nan
     except ValueError as e:
@@ -127,6 +123,7 @@ def _compute_metrics(
 
     return out
 
+# En este punto cada landmark posee un diccionario con las metricas y resulatdos. Ahora sacaremos las metricas agrupadas:
 
 def _pool_landmark_metrics(landmark_metrics):
     """
@@ -143,15 +140,16 @@ def _pool_landmark_metrics(landmark_metrics):
       concordance_index_ipcw están SIN ponderar (idénticos a los de la versión
       censurada), así que agrupar por conteos anularía la corrección IPCW.
     """
-    keys = [lm for lm, m in landmark_metrics.items() if m["n"] > 0]
+    keys = [lm for lm, m in landmark_metrics.items() if m["n"] > 0] # escogemos unicmaente aquellos que tengan pacientes
 
     conc = sum(landmark_metrics[lm]["concordant"] for lm in keys)
     disc = sum(landmark_metrics[lm]["discordant"] for lm in keys)
     tied = sum(landmark_metrics[lm]["tied_risk"] for lm in keys)
     denom = conc + disc + tied
-    pooled_cindex = (conc + 0.5 * tied) / denom if denom > 0 else np.nan
+    pooled_cindex = (conc + 0.5 * tied) / denom if denom > 0 else np.nan # Sumamos 0.5 por par empatado analogamente a como se hace en sksurv
 
     def _wmean(metric_key, weight_key):
+        """Calcula la media ponderada de una métrica según el peso dado."""
         num, den = 0.0, 0.0
         for lm in keys:
             m = landmark_metrics[lm]
@@ -159,7 +157,7 @@ def _pool_landmark_metrics(landmark_metrics):
             if np.isfinite(value) and weight > 0:
                 num += weight * value
                 den += weight
-        return num / den if den > 0 else np.nan
+        return num / den if den > 0 else np.nan  #De esta manera se pondera w_1*v_1+w_2*v_2+... / w_1+w_2+...
 
     return {
         "c_index": pooled_cindex,
@@ -207,7 +205,7 @@ def _bootstrap_ci(
     train y NUNCA se remuestrean.
     """
     rng = np.random.default_rng(seed)
-    pos_by_id = _patient_positions(ids_sub)
+    pos_by_id = _patient_positions(ids_sub) # Para cada paciente obtenemos las posiciones que ocupa en el subconjunto
     n_ids = len(pos_by_id)
     boots = {k: [] for k in SCALAR_METRIC_KEYS}
     for _ in range(n_boot):
@@ -225,8 +223,8 @@ def _bootstrap_ci(
             warn=lambda _msg: None,  # NaN esperables al remuestrear; no inundar el log
         )
         for k in SCALAR_METRIC_KEYS:
-            boots[k].append(m[k])
-    return {k: _percentile_ci(v) for k, v in boots.items()}
+            boots[k].append(m[k]) #Entran en cada lista de metrica, tantos resultados como n_boot 
+    return {k: _percentile_ci(v) for k, v in boots.items()} # se devuelve los percentiles correspondientes a cada metrica
 
 
 def _cluster_bootstrap_pooled(
@@ -281,10 +279,10 @@ def _cluster_bootstrap_pooled(
             )
         pooled = _pool_landmark_metrics(landmark_metrics)
         for k in SCALAR_METRIC_KEYS:
-            boots[k].append(pooled[k])
+            boots[k].append(pooled[k]) # Para cada boot, almacenas cada metrica agregada
         if (b + 1) % 10 == 0:
             print(f"    cluster bootstrap {b + 1}/{n_boot}", flush=True)
-    return {k: _percentile_ci(v) for k, v in boots.items()}
+    return {k: _percentile_ci(v) for k, v in boots.items()} # Se devuelve los percentiles de los boot
 
 
 def _safe(x):
@@ -427,16 +425,13 @@ for lm in landmark_times:
     if not np.any(idx):
         continue
     y_train_by_lm[lm] = Surv.from_arrays(
-        event=evs_tr[idx].astype(bool), time=durs_tr[idx]
-    )
+        event=evs_tr[idx].astype(bool), time=durs_tr[idx])
     h0, maxr = compute_baseline_hazard(
-        risks_tr[idx], durs_tr[idx], evs_tr[idx], HORIZON
-    )
+        risks_tr[idx], durs_tr[idx], evs_tr[idx], HORIZON)
     h0_by_lm[lm], maxr_by_lm[lm] = h0, maxr
     # Modelo nulo sin covariables: riesgos fijados a cero -> incidencia basal de train
     h0_null, _ = compute_baseline_hazard(
-        np.zeros(int(np.sum(idx))), durs_tr[idx], evs_tr[idx], HORIZON
-    )
+        np.zeros(int(np.sum(idx))), durs_tr[idx], evs_tr[idx], HORIZON)
     h0_null_by_lm[lm] = h0_null
 
 # ── 7. Métricas por landmark y estimando AGRUPADO (pooled) por split ─────────

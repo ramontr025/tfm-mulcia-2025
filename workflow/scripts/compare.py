@@ -66,10 +66,12 @@ METRIC_PNGS = {
     "ipa": "ipa.png",
 }
 FOREST_SPECS = [
-    ("auroc", "AUROC (5 años)", ".3f", 0.5),
-    ("c_index_ipcw", "C-index IPCW (Uno)", ".3f", 0.5),
-    ("ipa", "IPA (5 años)", ".3f", 0.0),
-    ("brier", "Brier (5 años)", ".4f", None),
+    # Sin líneas de referencia en los forest: dejar que cada métrica use la
+    # escala automática de sus estimandos e intervalos.
+    ("auroc", "AUROC 5 años", ".3f", None),
+    ("c_index_ipcw", "C-index IPCW (Uno)", ".3f", None),
+    ("ipa", "IPA 5 años", ".3f", None),
+    ("brier", "Brier IPCW 5 años  (↓ mejor)", ".4f", None),
 ]
 
 # 1. Obtener archivos de entrada y salida
@@ -202,6 +204,10 @@ def _panel_landmark(ax, metric_key, ylabel, hline=None, show_events=False):
             )
             ax2.set_ylabel("Eventos observados", color="gray")
             ax2.tick_params(axis="y", colors="gray")
+            # Mantener la escala de la referencia: las barras representan
+            # eventos observados, no una fraccion del eje AUROC.
+            ax2.set_ylim(0, 2000)
+            ax2.set_yticks(np.arange(0, 2001, 250))
             ax2.set_zorder(ax.get_zorder())
             ax.set_zorder(ax2.get_zorder() + 1)
             ax.patch.set_visible(False)
@@ -245,7 +251,7 @@ def _panel_landmark(ax, metric_key, ylabel, hline=None, show_events=False):
     return ax
 
 
-def _panel_forest(ax, ax_txt, metric_key, title, fmt, refline):
+def _panel_forest(ax, ax_labels, ax_values, metric_key, title, fmt, refline):
     """Forest plot of the pooled estimand + 95% cluster-bootstrap CI, one row per model."""
     rows = []
     for m_name in model_rank:
@@ -282,9 +288,15 @@ def _panel_forest(ax, ax_txt, metric_key, title, fmt, refline):
         # Las cifras viven en el eje fantasma de la derecha (axis off), no dentro
         # del eje del forest: meterlas dentro obligaría a inflar el xlim y la
         # escala de la métrica quedaría deformada.
-        ax_txt.text(0.0, y, m_name, ha="left", va="center", fontsize=9)
-        ax_txt.text(
-            0.98, y, ci_txt, ha="right", va="center", fontsize=9, family="monospace"
+        ax_labels.text(0.98, y, m_name, ha="right", va="center", fontsize=9)
+        ax_values.text(
+            0.02,
+            y,
+            ci_txt,
+            ha="left",
+            va="center",
+            fontsize=9,
+            family="monospace",
         )
 
     if refline is not None:
@@ -293,15 +305,49 @@ def _panel_forest(ax, ax_txt, metric_key, title, fmt, refline):
     ax.set_title(title, fontsize=11)
     ax.grid(True, axis="x", alpha=0.3, linestyle="--")
     ax.set_ylim(-0.6, len(rows) - 0.4)
-    ax_txt.set_ylim(ax.get_ylim())
-    ax_txt.axis("off")
+    for text_ax in (ax_labels, ax_values):
+        text_ax.set_ylim(ax.get_ylim())
+        text_ax.axis("off")
     return ax
 
 
 def plot_main_figure(out_stem):
     """Lámina central para paper/memoria: paneles A, B y C en una sola figura."""
-    fig = plt.figure(figsize=(16, 10))
-    gs = fig.add_gridspec(2, 2, height_ratios=[1.0, 1.15], hspace=0.32, wspace=0.25)
+    fig = plt.figure(figsize=(20, 12))
+    fig.suptitle(
+        "Riesgo de cáncer de pulmón a 5 años por landmark",
+        x=0.055,
+        y=0.975,
+        ha="left",
+        fontsize=24,
+        fontweight="bold",
+    )
+    fig.text(
+        0.055,
+        0.935,
+        "Evaluación en holdout. IC 95%: bootstrap de paciente por landmark (A, B) "
+        "y cluster bootstrap sobre el estimando agrupado (C)",
+        ha="left",
+        va="top",
+        fontsize=15,
+        color="#5a5a5a",
+    )
+
+    # La referencia usa dos paneles grandes apilados a la izquierda y los cuatro
+    # forest plots apilados a la derecha. Mantener esta geometría evita comprimir
+    # los textos de los forest en una fila horizontal.
+    gs = fig.add_gridspec(
+        2,
+        2,
+        width_ratios=[1.65, 1.0],
+        height_ratios=[1.0, 1.0],
+        left=0.055,
+        right=0.985,
+        bottom=0.075,
+        top=0.86,
+        hspace=0.30,
+        wspace=0.18,
+    )
 
     # Panel A — discriminación por landmark: AUROC a 5 años con banda de IC 95%
     # y eje secundario con los eventos observados por landmark (barras grises).
@@ -309,31 +355,51 @@ def plot_main_figure(out_stem):
     # el número de casos, no con inestabilidad del modelo.
     ax_a = fig.add_subplot(gs[0, 0])
     _panel_landmark(ax_a, "auroc", METRIC_LABELS["auroc"], show_events=True)
-    ax_a.set_title("A. Discriminación por landmark", loc="left", fontweight="bold")
-    ax_a.legend(fontsize=9, loc="best", framealpha=0.9)
+    ax_a.set_title(
+        "A   Discriminación por landmark", loc="left", fontweight="bold", fontsize=18
+    )
+    ax_a.legend(
+        fontsize=10,
+        loc="lower left",
+        ncol=2,
+        framealpha=0.9,
+        columnspacing=1.0,
+    )
 
     # Panel B — utilidad frente al modelo nulo: IPA a 5 años con línea de
     # referencia en 0 y la zona inferior sombreada.
-    ax_b = fig.add_subplot(gs[0, 1])
+    ax_b = fig.add_subplot(gs[1, 0])
     _panel_landmark(ax_b, "ipa", METRIC_LABELS["ipa"], hline=0.0)
-    ax_b.set_title("B. Utilidad frente al modelo nulo", loc="left", fontweight="bold")
+    ax_b.set_title(
+        "B   Utilidad frente al modelo nulo", loc="left", fontweight="bold", fontsize=18
+    )
 
-    # Panel C — resumen agregado: forest de cuatro métricas, un modelo por fila,
-    # con el punto agrupado, su IC 95% de cluster bootstrap y las cifras exactas.
-    gs_c = gs[1, :].subgridspec(1, len(FOREST_SPECS), wspace=0.45)
-    for i, (metric_key, title, fmt, refline) in enumerate(FOREST_SPECS):
-        sub = gs_c[0, i].subgridspec(1, 2, width_ratios=[2.2, 1.8], wspace=0.05)
-        ax_f = fig.add_subplot(sub[0])
-        ax_txt = fig.add_subplot(sub[1])
-        _panel_forest(ax_f, ax_txt, metric_key, title, fmt, refline)
+    # Panel C — cuatro forest plots verticales, con etiquetas y cifras en ejes
+    # independientes para que nunca se pisen con el eje de la métrica.
     fig.text(
-        0.01,
-        0.47,
-        "C. Resumen agregado (estimando pooled + IC 95% cluster bootstrap)",
+        0.68,
+        0.88,
+        "C   Resumen agregado (pooled)",
         fontweight="bold",
+        fontsize=18,
         ha="left",
         va="bottom",
     )
+    gs_c = gs[:, 1].subgridspec(len(FOREST_SPECS), 1, hspace=0.55)
+    for i, (metric_key, title, fmt, refline) in enumerate(FOREST_SPECS):
+        sub = gs_c[i, 0].subgridspec(1, 3, width_ratios=[0.80, 1.65, 1.55], wspace=0.04)
+        ax_labels = fig.add_subplot(sub[0])
+        ax_f = fig.add_subplot(sub[1])
+        ax_values = fig.add_subplot(sub[2])
+        _panel_forest(
+            ax_f,
+            ax_labels,
+            ax_values,
+            metric_key,
+            title,
+            fmt,
+            refline,
+        )
 
     fig.align_ylabels()
     fig.savefig(f"{out_stem}.png", dpi=300, bbox_inches="tight")
