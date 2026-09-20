@@ -140,3 +140,20 @@ models:
     max_seq_len: 200
     age_weight_gamma: 1.0
 
+  - name: strats
+    arch: strats
+    icd: 1
+    hidden_dim: 32
+    num_heads: 4
+    num_layers: 2
+    dim_feedforward: 64
+    dropout: 0.2
+    demo_dim: 8
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 20
+    patience: 5
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0

@@ -249,3 +249,157 @@ class SimpleLSTM(nn.Module):
         last_risk = all_risks[batch_idx, last_idx]  # (B,)
 
         return last_risk, all_risks, h_states
+
+
+# Arquitectura STraTS
+
+# Definimos CVE y FusionAtt tal y como lo hacen en el repositorio del paper
+
+class CVE(nn.Module):
+    """
+    Continuous Value Embedding module (MLP 2 capas: 1 -> sqrt(d) -> d).
+    """
+
+    def __init__(self, hid_dim: int):
+        super().__init__()
+        int_dim = max(int(np.sqrt(hid_dim)), 1)
+        self.W1 = nn.Parameter(torch.empty(1, int_dim), requires_grad=True)
+        self.b1 = nn.Parameter(torch.zeros(int_dim), requires_grad=True)
+        self.W2 = nn.Parameter(torch.empty(int_dim, hid_dim), requires_grad=True)
+        nn.init.xavier_uniform_(self.W1)
+        nn.init.xavier_uniform_(self.W2)
+        self.activation = torch.tanh
+
+    def forward(self, x):
+        # x: (bsz, max_len)
+        x = torch.unsqueeze(x, -1)
+        x = torch.matmul(x, self.W1) + self.b1[None, None, :]  # (bsz, max_len, int_dim)
+        x = self.activation(x)
+        x = torch.matmul(x, self.W2)  # (bsz, max_len, hid_dim)
+        return x
+
+
+class FusionAtt(nn.Module):
+    """
+    Fusion Self-Attention pooling module (pondera tripletas observadas para obtener e^T).
+    """
+
+    def __init__(self, hid_dim: int):
+        super().__init__()
+        int_dim = hid_dim
+        self.W = nn.Parameter(torch.empty(hid_dim, int_dim), requires_grad=True)
+        self.b = nn.Parameter(torch.zeros(int_dim), requires_grad=True)
+        self.u = nn.Parameter(torch.empty(int_dim, 1), requires_grad=True)
+        nn.init.xavier_uniform_(self.W)
+        nn.init.xavier_uniform_(self.u)
+        self.activation = torch.tanh
+
+    def forward(self, x, mask):
+        # x: (bsz, max_len, hid_dim)
+        # mask: (bsz, max_len) — 1.0 para tokens reales, 0.0 para padding
+        att = torch.matmul(x, self.W) + self.b[None, None, :]  # (bsz, max_len, int_dim)
+        att = self.activation(att)
+        att = torch.matmul(att, self.u)[:, :, 0]  # (bsz, max_len)
+        att = att + (1.0 - mask.float()) * -1e9  # Enmascarar padding
+        att = torch.softmax(att, dim=-1)  # (bsz, max_len)
+        return att
+
+# Implementamos STraTS adaptandolo para que guarde similitud con los argumentos de entrada y las salidas que espera nuestro pipeline.
+
+class STraTS(nn.Module):
+    """
+    Modelo STraTS completo para predicción de supervivencia.
+    """
+
+    def __init__(
+        self,
+        vocab_size: int,
+        lab_dim: int,
+        hid_dim: int = 32,
+        num_heads: int = 4,
+        num_layers: int = 2,
+        dim_feedforward: int = 64,
+        dropout: float = 0.2,
+        demo_dim: int = 8,
+        hidden_dim: int | None = None,
+    ):
+        if hidden_dim is not None:
+            hid_dim = hidden_dim
+        super().__init__()
+        self.vocab_size = vocab_size
+        self.lab_dim = lab_dim
+        self.hid_dim = hid_dim
+
+        # 1. Embeddings de tripletas
+        self.time_cve = CVE(hid_dim)
+        self.feature_emb = nn.Embedding(vocab_size, hid_dim)
+        self.val_cve = CVE(hid_dim)
+        self.dropout = nn.Dropout(dropout)
+
+        # 2. Bloques de Transformer Encoder
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=hid_dim,
+            nhead=num_heads,
+            dim_feedforward=dim_feedforward,
+            dropout=dropout,
+            activation="gelu",
+            batch_first=True,
+            norm_first=False,
+        )
+        self.transformer_encoder = nn.TransformerEncoder(
+            encoder_layer, num_layers=num_layers
+        )
+
+        # 3. Fusion Attention Pooling
+        self.fusion_att = FusionAtt(hid_dim)
+
+        # 4. Demographics Embedding (sex_male)
+        self.demo_fc = nn.Linear(1, demo_dim)
+
+        # 5. Cabeza de predicción de riesgo
+        self.head = nn.Sequential(
+            nn.Dropout(dropout),
+            nn.Linear(hid_dim + demo_dim, 1),
+        )
+
+    def forward(
+        self,
+        values,            # (B, N_max) float
+        features,          # (B, N_max) long
+        times,             # (B, N_max) float (edad exacta del evento)
+        time_since_index,  # (B, N_max) float
+        padding_mask,      # (B, N_max) bool (True for padding)
+        lengths,           # (B,) long
+        sex_male,          # (B,) float
+        **kwargs,
+    ):
+        # 1. Embeddings de los componentes de la tripleta (t, f, v)
+        t_emb = self.time_cve(times)             # (B, N_max, hid_dim)
+        f_emb = self.feature_emb(features)       # (B, N_max, hid_dim)
+        v_emb = self.val_cve(values)             # (B, N_max, hid_dim)
+
+        # Para diagnósticos ICD-10 (features >= lab_dim), anulamos el embedding continuo
+        is_lab = (features < self.lab_dim).unsqueeze(-1).float()
+        v_emb = v_emb * is_lab # No tienen sentido los valores de continuo para los diagnosticos que se representan como valores binarios.
+
+        triplet_emb = self.dropout(t_emb + f_emb + v_emb)  # (B, N_max, hid_dim)
+
+        # 2. Transformer Encoder con máscara de padding
+        out = self.transformer_encoder(triplet_emb, src_key_padding_mask=padding_mask)  # (B, N_max, hid_dim)
+
+        # 3. Fusion Self-Attention pooling -> e^T
+        real_mask = (~padding_mask).float()
+        att_weights = self.fusion_att(out, real_mask)  # (B, N_max)
+        e_T = torch.sum(out * att_weights.unsqueeze(-1), dim=1)  # (B, hid_dim)
+
+        # 4. Demographics embedding e^d
+        e_d = torch.tanh(self.demo_fc(sex_male.unsqueeze(-1)))  # (B, demo_dim)
+
+        # 5. Concatenación [e^T, e^d] y proyección a riesgo
+        e = torch.cat([e_T, e_d], dim=-1)  # (B, hid_dim + demo_dim)
+        last_risk = self.head(e).squeeze(-1)  # (B,)
+
+        all_risks = None # Como transformer se ejecuta de manera paralela, no tiene pasos temporales definidos, por lo tanto devolvemos None
+        h_states = out # out ya son los estados de cada observacion, es decir, h_t
+
+        return last_risk, all_risks, h_states

@@ -332,6 +332,13 @@ if arch_name == "cox":
         return predict_cox_landmarks(
             artifact, seqs, cohort, landmark_times, INDEX_AGE, device
         )
+elif arch_name == "strats" :
+    from engine import predict_STraTS
+
+    def predict(seqs, cohort):
+        return predict_STraTS(
+            artifact, seqs, cohort, landmark_times, INDEX_AGE, device
+        )
 
 else:
     lab_dim = artifact["lab_dim"]

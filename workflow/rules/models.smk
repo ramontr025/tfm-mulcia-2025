@@ -15,6 +15,11 @@ rule train:
         arch=lambda wc: MODELS[wc.name]["arch"],
         icd=lambda wc: MODELS[wc.name]["icd"],
         hidden_dim=lambda wc: MODELS[wc.name].get("hidden_dim"),  # None para cox
+        num_heads=lambda wc: MODELS[wc.name].get("num_heads"),  # None para cox y secuenciales
+        num_layers=lambda wc: MODELS[wc.name].get("num_layers"),  # None para cox y secuenciales
+        dim_feedforward=lambda wc: MODELS[wc.name].get("dim_feedforward"),  # None para cox y secuenciales
+        dropout=lambda wc: MODELS[wc.name].get("dropout"),  
+        demo_dim=lambda wc: MODELS[wc.name].get("demo_dim"),  # None para cox y secuenciales
         batch_size=lambda wc: MODELS[wc.name]["batch_size"],
         learning_rate=lambda wc: MODELS[wc.name]["learning_rate"],
         weight_decay=lambda wc: MODELS[wc.name]["weight_decay"],

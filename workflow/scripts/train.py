@@ -1,4 +1,3 @@
-from model import SimpleLSTM
 import copy
 import pickle
 import sys
@@ -13,10 +12,15 @@ from torch.utils.data import DataLoader, WeightedRandomSampler
 sys.path.append(str(Path(__file__).parent))
 
 from cox import train_cox
-from dataset import RawSequenceDatasetWithICD, raw_pad_collate_with_icd, load_sequences
-from engine import run_raw_loss_epoch_icd
-from model import TimeAwareGRUD
-
+from dataset import (
+    RawSequenceDatasetWithICD,
+    STraTSDataset,
+    load_sequences,
+    raw_pad_collate_with_icd,
+    strats_pad_collate,
+)
+from engine import run_raw_loss_epoch_icd, run_strats_epoch
+from model import SimpleLSTM, STraTS, TimeAwareGRUD
 
 if TYPE_CHECKING:
     # Solo para el linter/IDE (tipo + autocompletado). En tiempo de ejecucion
@@ -45,62 +49,84 @@ age_weight_gamma = float(snakemake.params.age_weight_gamma)
 index_age = float(snakemake.params.index_age)
 landmark_min = int(snakemake.params.landmark_min)
 landmark_max = int(snakemake.params.landmark_max)
+landmark_ages = list(range(landmark_min, landmark_max + 1))
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}")
 
-# 2. Cargar el pickle de secuencias de entrada (train, val, holdout, etc.)
+# 2. Cargar el pickle de secuencias de entrada (train, val)
 sequences_train, lab_codes, cohort_train = load_sequences(snakemake.input.train)
 sequences_val, _, cohort_val = load_sequences(snakemake.input.val)
 
-# 3. Vocabulario code_to_idx dinámico a partir de los códigos ICD-10 de las secuencias
-if hasattr(snakemake.params, "code_to_idx") and snakemake.params.code_to_idx:
-    code_to_idx = snakemake.params.code_to_idx
+# 3. Construir vocabulario de códigos ICD-10
+all_icd_codes = set()
+for pid, seq in sequences_train.items():
+    for step_codes in seq.get("codes", []):
+        for code in step_codes:
+            all_icd_codes.add(code)
+code_to_idx = {code: i + 1 for i, code in enumerate(sorted(all_icd_codes))}
+lab_dim = len(lab_codes)
+
+if arch_name == "strats":
+    vocab_size = lab_dim + len(code_to_idx) + 1
+    print(
+        f"-> [STraTS] Variables clínicas: {lab_dim}, Códigos ICD-10: {len(code_to_idx)}, Vocab total: {vocab_size}"
+    )
 else:
-    print("Construyendo vocabulario de códigos ICD-10...")
-    all_icd_codes = set()
-    for pid, seq in sequences_train.items():
-        for step_codes in seq["codes"]:
-            for code in step_codes:
-                all_icd_codes.add(code)
-    # Mapeamos cada código único a un entero empezando en 1 (el 0 se reserva para padding/sin códigos)
-    code_to_idx = {code: i + 1 for i, code in enumerate(sorted(all_icd_codes))}
+    vocab_size = len(code_to_idx) + 1
+    print(
+        f"-> Vocabulario creado: {len(code_to_idx)} códigos únicos. vocab_size = {vocab_size}"
+    )
 
-vocab_size = len(code_to_idx) + 1
-print(
-    f"-> Vocabulario creado: {len(code_to_idx)} códigos únicos. vocab_size = {vocab_size}"
-)
+# 4. Instanciación del dataset para la entrada actual según el modelo determinado
+if arch_name == "strats":
+    train_dataset = STraTSDataset(
+        sequences=sequences_train,
+        cohort_df=cohort_train,
+        landmark_ages=landmark_ages,
+        index_age=index_age,
+        code_to_idx=code_to_idx,
+        max_events=max_events,
+        age_weight_gamma=age_weight_gamma,
+    )
+    val_dataset = STraTSDataset(
+        sequences=sequences_val,
+        cohort_df=cohort_val,
+        landmark_ages=landmark_ages,
+        index_age=index_age,
+        code_to_idx=code_to_idx,
+        max_events=max_events,
+        age_weight_gamma=age_weight_gamma,
+    )
+    collate_fn = strats_pad_collate
+else:
+    train_dataset = RawSequenceDatasetWithICD(
+        sequences=sequences_train,
+        cohort_df=cohort_train,
+        landmark_ages=landmark_ages,
+        index_age=index_age,
+        code_to_idx=code_to_idx,
+        max_events=max_events,
+        age_weight_gamma=age_weight_gamma,
+    )
+    val_dataset = RawSequenceDatasetWithICD(
+        sequences=sequences_val,
+        cohort_df=cohort_val,
+        landmark_ages=landmark_ages,
+        index_age=index_age,
+        code_to_idx=code_to_idx,
+        max_events=max_events,
+        age_weight_gamma=age_weight_gamma,
+    )
+    collate_fn = raw_pad_collate_with_icd
 
-landmark_ages = list(range(int(landmark_min), int(landmark_max) + 1))
-
-# 4. Instanciación del dataset para la entrada actual
-train_dataset_icd = RawSequenceDatasetWithICD(
-    sequences=sequences_train,
-    cohort_df=cohort_train,
-    landmark_ages=landmark_ages,
-    index_age=index_age,
-    code_to_idx=code_to_idx,
-    max_events=max_events,
-    age_weight_gamma=age_weight_gamma,
-)
-
-val_dataset_icd = RawSequenceDatasetWithICD(
-    sequences=sequences_val,
-    cohort_df=cohort_val,
-    landmark_ages=landmark_ages,
-    index_age=index_age,
-    code_to_idx=code_to_idx,
-    max_events=max_events,
-    age_weight_gamma=age_weight_gamma,
-)
-
-# 5. Definición y entrenamiento según el modelo
+# 5. Definición y configuración del modelo
 # ── Rama de entrenamiento para Cox Baseline (tabular / LOCF) ──
 if arch_name == "cox":
     print("\n── Entrenando Modelo Cox Baseline ──")
     artifact = train_cox(
-        train_dataset=train_dataset_icd,
-        val_dataset=val_dataset_icd,
+        train_dataset=train_dataset,
+        val_dataset=val_dataset,
         landmark_ages=landmark_ages,
         lab_codes=lab_codes,
         code_to_idx=code_to_idx,
@@ -123,79 +149,90 @@ if arch_name == "cox":
     )
     sys.exit(0)
 
-# ── Rama de entrenamiento para Modelos Secuenciales (GRU-D, LSTM) ──
+# ── Definición para STraTS Transformers ──
+elif arch_name == "strats":
+    hidden_dim = int(snakemake.params.hidden_dim)
+    num_heads = int(snakemake.params.num_heads)
+    num_layers = int(snakemake.params.num_layers)
+    dim_feedforward = int(snakemake.params.dim_feedforward)
+    dropout = float(snakemake.params.dropout)
+    demo_dim = int(snakemake.params.demo_dim)
 
-HIDDEN_DIM = int(
-    snakemake.params.hidden_dim
-)  # Lo leemos aqui para que no explote en el caso de Cox
+    model = STraTS(
+        vocab_size=vocab_size,
+        lab_dim=lab_dim,
+        hidden_dim=hidden_dim,
+        num_heads=num_heads,
+        num_layers=num_layers,
+        dim_feedforward=dim_feedforward,
+        dropout=dropout,
+        demo_dim=demo_dim,
+    ).to(device)
 
-all_labs = [s["labs"] for s in train_dataset_icd.samples]
-if all_labs:
-    all_labs_concat = np.concatenate(all_labs, axis=0)
-    mean_x = all_labs_concat.mean(axis=0)
+# ── Definición para Modelos Secuenciales (GRU-D, LSTM) ──
 else:
-    mean_x = np.zeros(train_dataset_icd.lab_dim, dtype=np.float32)
+    HIDDEN_DIM = int(snakemake.params.hidden_dim)
 
-
-def build_model(
-    arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2
-):
-    if arch == "grud":
-        return TimeAwareGRUD(
-            input_dim=input_dim,
-            vocab_size=vocab_size,
-            mean_x=mean_x,
-            embed_dim=embed_dim,
-            hidden_dim=hidden_dim,
-            dropout=dropout,
-        )
-    elif arch == "lstm":
-        return SimpleLSTM(
-            input_dim=input_dim,
-            vocab_size=vocab_size,
-            mean_x=mean_x,
-            embed_dim=embed_dim,
-            hidden_dim=hidden_dim,
-            dropout=dropout,
-        )
+    all_labs = [s["labs"] for s in train_dataset.samples]
+    if all_labs:
+        all_labs_concat = np.concatenate(all_labs, axis=0)
+        mean_x = all_labs_concat.mean(axis=0)
     else:
-        raise ValueError(f"Arquitectura secuencial no soportada: {arch}")
+        mean_x = np.zeros(train_dataset.lab_dim, dtype=np.float32)
 
+    def build_sequential_model(
+        arch, input_dim, vocab_size, mean_x, embed_dim, hidden_dim, dropout=0.2
+    ):
+        if arch == "grud":
+            return TimeAwareGRUD(
+                input_dim=input_dim,
+                vocab_size=vocab_size,
+                mean_x=mean_x,
+                embed_dim=embed_dim,
+                hidden_dim=hidden_dim,
+                dropout=dropout,
+            )
+        elif arch == "lstm":
+            return SimpleLSTM(
+                input_dim=input_dim,
+                vocab_size=vocab_size,
+                mean_x=mean_x,
+                embed_dim=embed_dim,
+                hidden_dim=hidden_dim,
+                dropout=dropout,
+            )
+        else:
+            raise ValueError(f"Arquitectura secuencial no soportada: {arch}")
 
-# Instanciación
-model = build_model(
-    arch=arch_name,
-    input_dim=train_dataset_icd.lab_dim,
-    vocab_size=vocab_size,
-    mean_x=mean_x,
-    embed_dim=embed_dim,
-    hidden_dim=HIDDEN_DIM,
-    dropout=0.2,
-).to(device)
+    model = build_sequential_model(
+        arch=arch_name,
+        input_dim=train_dataset.lab_dim,
+        vocab_size=vocab_size,
+        mean_x=mean_x,
+        embed_dim=embed_dim,
+        hidden_dim=HIDDEN_DIM,
+        dropout=0.2,
+    ).to(device)
 
-
-# 6. Entrenamiento
-
-
-# Event oversampling: give event patients EVENT_OVERSAMPLE× more draw probability
+# 6. Bucle de Entrenamiento
 sample_weights = [
-    EVENT_OVERSAMPLE if f == 1 else 1.0 for f in train_dataset_icd.event_flags
+    EVENT_OVERSAMPLE if f == 1 else 1.0 for f in train_dataset.event_flags
 ]
 sampler = WeightedRandomSampler(
     sample_weights, num_samples=len(sample_weights), replacement=True
 )
 
 train_loader = DataLoader(
-    train_dataset_icd,
+    train_dataset,
     batch_size=BATCH_SIZE,
     sampler=sampler,
-    collate_fn=raw_pad_collate_with_icd,
+    collate_fn=collate_fn,
 )
 val_loader = DataLoader(
-    val_dataset_icd,
+    val_dataset,
     batch_size=BATCH_SIZE,
     shuffle=False,
-    collate_fn=raw_pad_collate_with_icd,
+    collate_fn=collate_fn,
 )
 
 optimizer = torch.optim.Adam(
@@ -209,17 +246,20 @@ best_val_loss = float("inf")
 best_state = None
 no_improve = 0
 
+epoch_fn = run_strats_epoch if arch_name == "strats" else run_raw_loss_epoch_icd
+
 for epoch in range(1, MAX_EPOCHS + 1):
-    train_loss, train_ci = run_raw_loss_epoch_icd(
+    train_loss, train_ci = epoch_fn(
         train_loader, model, device, optimizer=optimizer
-    )  # replace with the real call
-    val_loss, val_ci = run_raw_loss_epoch_icd(val_loader, model, device, optimizer=None)
+    )
+    val_loss, val_ci = epoch_fn(val_loader, model, device, optimizer=None)
     scheduler.step(val_loss)
 
     print(
         f"Epoch {epoch:3d}/{MAX_EPOCHS}  "
         f"train_loss={train_loss:.4f}  train_ci={train_ci:.4f}  "
-        f"val_loss={val_loss:.4f}  val_ci={val_ci:.4f}"
+        f"val_loss={val_loss:.4f}  val_ci={val_ci:.4f}",
+        flush=True,
     )
 
     if val_loss < best_val_loss - 1e-4:
@@ -229,7 +269,7 @@ for epoch in range(1, MAX_EPOCHS + 1):
     else:
         no_improve += 1
         if no_improve >= PATIENCE:
-            print(f"  → early stopping at epoch {epoch}")
+            print(f"  → early stopping at epoch {epoch}", flush=True)
             break
 
 # 7. Guardar el artefacto del modelo entrenado en snakemake.output[0]
@@ -238,17 +278,33 @@ if best_state is not None:
 
 print(f"\nBest val loss: {best_val_loss:.4f}")
 
-artifact = {
-    "arch": arch_name,
-    "lab_dim": train_dataset_icd.lab_dim,
-    "hidden_dim": HIDDEN_DIM,
-    "vocab_size": vocab_size,
-    "embed_dim": embed_dim,
-    "mean_x": mean_x,
-    "lab_codes": lab_codes,
-    "code_to_idx": code_to_idx,
-    "state_dict": model.state_dict(),
-}
+if arch_name == "strats":
+    artifact = {
+        "arch": "strats",
+        "vocab_size": vocab_size,
+        "lab_dim": lab_dim,
+        "hidden_dim": hidden_dim,
+        "num_heads": num_heads,
+        "num_layers": num_layers,
+        "dim_feedforward": dim_feedforward,
+        "dropout": dropout,
+        "demo_dim": demo_dim,
+        "lab_codes": lab_codes,
+        "code_to_idx": code_to_idx,
+        "state_dict": model.state_dict(),
+    }
+else:
+    artifact = {
+        "arch": arch_name,
+        "lab_dim": train_dataset.lab_dim,
+        "hidden_dim": HIDDEN_DIM,
+        "vocab_size": vocab_size,
+        "embed_dim": embed_dim,
+        "mean_x": mean_x,
+        "lab_codes": lab_codes,
+        "code_to_idx": code_to_idx,
+        "state_dict": model.state_dict(),
+    }
 
 with open(snakemake.output[0], "wb") as f:
     pickle.dump(artifact, f)
