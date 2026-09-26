@@ -95,8 +95,8 @@ models:
     batch_size: 128
     learning_rate: 0.001
     weight_decay: 0.01
-    max_epochs: 5
-    patience: 5
+    max_epochs: 20
+    patience: 3
     event_oversample: 3.0
     max_seq_len: 200
     age_weight_gamma: 1.0
@@ -108,8 +108,8 @@ models:
     batch_size: 128
     learning_rate: 0.001
     weight_decay: 0.01
-    max_epochs: 5
-    patience: 5
+    max_epochs: 20
+    patience: 3
     event_oversample: 3.0
     max_seq_len: 200
     age_weight_gamma: 1.0
@@ -134,8 +134,8 @@ models:
     batch_size: 128
     learning_rate: 0.001
     weight_decay: 0.01
-    max_epochs: 5
-    patience: 5
+    max_epochs: 20
+    patience: 3
     event_oversample: 3.0
     max_seq_len: 200
     age_weight_gamma: 1.0
@@ -151,9 +151,9 @@ models:
     demo_dim: 8
     batch_size: 128
     learning_rate: 0.001
-    weight_decay: 0.01
+    weight_decay: 0.0001
     max_epochs: 20
-    patience: 5
+    patience: 3
     event_oversample: 3.0
     max_seq_len: 200
     age_weight_gamma: 1.0

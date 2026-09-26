@@ -120,6 +120,20 @@ else:
     )
     collate_fn = raw_pad_collate_with_icd
 
+if arch_name == "strats":
+    print(
+        f"[{snakemake.wildcards.name}] Historia de paciente cubierta (train): "
+        f"{train_dataset.mean_triplets:.1f} tripletas de media, abarcando "
+        f"{train_dataset.mean_timesteps:.1f} timesteps distintos por secuencia.",
+        flush=True,
+    )
+else:
+    print(
+        f"[{snakemake.wildcards.name}] Historia de paciente cubierta (train): "
+        f"{train_dataset.mean_timesteps:.1f} timesteps de media por secuencia.",
+        flush=True,
+    )
+
 # 5. Definición y configuración del modelo
 # ── Rama de entrenamiento para Cox Baseline (tabular / LOCF) ──
 if arch_name == "cox":

@@ -98,9 +98,10 @@ class RawSequenceDatasetWithICD(Dataset):
             self.lab_dim = 0
         n = len(self.samples)
         self.event_rate = sum(self.event_flags) / max(n, 1)
-        self.mean_seq_len = (
+        self.mean_timesteps = (
             float(np.mean([len(s["times"]) for s in self.samples])) if n else 0.0
         )
+        self.mean_seq_len = self.mean_timesteps
 
     def __len__(self):
         return len(self.samples)
@@ -316,9 +317,13 @@ class STraTSDataset(Dataset):
             self.lab_dim = 0
         n = len(self.samples)
         self.event_rate = sum(self.event_flags) / max(n, 1)
-        self.mean_seq_len = (
+        self.mean_triplets = (
             float(np.mean([len(s["times"]) for s in self.samples])) if n else 0.0
         )
+        self.mean_timesteps = (
+            float(np.mean([len(np.unique(s["times"])) for s in self.samples])) if n else 0.0
+        )
+        self.mean_seq_len = self.mean_triplets
 
     def __len__(self):
         return len(self.samples)

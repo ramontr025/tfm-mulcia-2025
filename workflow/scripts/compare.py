@@ -135,14 +135,13 @@ def _landmark_series(data, metric_key, split):
 
 
 def _events_per_landmark(split):
-    """Eventos observados por landmark en el split (iguales para todos los modelos)."""
+    """Eventos observados en el horizonte por landmark en el split (iguales para todos los modelos)."""
     for data in MODELS_DATA.values():
         lm_dict = data.get("c_index", {}).get(split, {}).get("landmarks", {})
         if lm_dict:
             lms = sorted(int(k) for k in lm_dict.keys())
-            return np.array(lms), np.array(
-                [lm_dict[str(lm)]["n_events"] for lm in lms], dtype=float
-            )
+            return np.array(lms), np.array([lm_dict[str(lm)].get("n_events_horizon", lm_dict[str(lm)]["n_events"]) for lm in lms], dtype=float,)
+
     return np.array([]), np.array([])
 
 
@@ -200,14 +199,13 @@ def _panel_landmark(ax, metric_key, ylabel, hline=None, show_events=False):
                 color="gray",
                 alpha=0.25,
                 zorder=1,
-                label="Eventos (eje dcho.)",
+                label="Eventos en horizonte (eje dcho.)",
             )
-            ax2.set_ylabel("Eventos observados", color="gray")
+            ax2.set_ylabel("Eventos observados en horizonte", color="gray")
             ax2.tick_params(axis="y", colors="gray")
-            # Mantener la escala de la referencia: las barras representan
-            # eventos observados, no una fraccion del eje AUROC.
-            ax2.set_ylim(0, 2000)
-            ax2.set_yticks(np.arange(0, 2001, 250))
+            max_ev = np.nanmax(events) if len(events) else 0
+            ylim_top = max(50, int(np.ceil((max_ev * 1.25) / 50.0) * 50))
+            ax2.set_ylim(0, ylim_top)
             ax2.set_zorder(ax.get_zorder())
             ax.set_zorder(ax2.get_zorder() + 1)
             ax.patch.set_visible(False)

@@ -58,15 +58,18 @@ def _compute_metrics(
     durs_sub = np.asarray(durs_sub, dtype=np.float64)
     evs_sub = np.asarray(evs_sub, dtype=np.float64)
     n = int(len(risks_sub))
-    n_events = int(np.sum(evs_sub))
+    n_events = int(np.sum(evs_sub))                                  # seguimiento completo
+    n_events_horizon = int(np.sum((durs_sub <= horizon) & (evs_sub == 1)))   # los del horizonte
     # Inicializamos un diccionario para guardar los resultados
     out = {
         "n": n,
         "n_events": n_events,
+        "n_events_horizon": n_events_horizon,
         "c_index": np.nan,
         "auroc": np.nan,
         "c_index_ipcw": np.nan,
         "brier": np.nan,
+        "brier_null":np.nan,
         "ipa": np.nan,
         # Conteos para el agrupado: Harrell exacto (conc/disc/tied) y peso de
         # pares comparables para la media ponderada del C-index IPCW.
@@ -117,6 +120,7 @@ def _compute_metrics(
         brier_model = brier_score(y_train, y_test, surv_prob_model[:, None], [horizon])[1][0]
         brier_null = brier_score(y_train, y_test, surv_prob_null[:, None], [horizon])[1][0]
         out["brier"] = float(brier_model)
+        out["brier_null"] = float(brier_null)
         out["ipa"] = float(1.0 - brier_model / brier_null) if brier_null > 0 else np.nan
     except ValueError as e:
         warn(f"[warn] Brier/IPA no definido en este subconjunto (n={n}): {e}")
@@ -132,8 +136,9 @@ def _pool_landmark_metrics(landmark_metrics):
 
     - c_index (Harrell): exacto. Suma los pares concordantes, discordantes y
       empatados de cada landmark y divide una sola vez al final.
-    - brier e ipa: exactos como media ponderada por n, porque cada Brier por
-      landmark ya es la media de sus propias filas.
+    - brier: exacto como media ponderada por n, porque cada Brier por landmark ya es
+      la media de sus propias filas.
+    - ipa: derivado del cociente de los Brier agrupados (1 - brier_agrupado / brier_null_agrupado)
     - auroc y c_index_ipcw: media de los valores por landmark ponderada por el
       tamaño de su estrato (n y pares comparables respectivamente). Es una
       APROXIMACIÓN, no el estimador estratificado exacto: los conteos que devuelve
@@ -158,13 +163,20 @@ def _pool_landmark_metrics(landmark_metrics):
                 num += weight * value
                 den += weight
         return num / den if den > 0 else np.nan  #De esta manera se pondera w_1*v_1+w_2*v_2+... / w_1+w_2+...
+    brier = _wmean("brier", "n")
+    brier_null = _wmean("brier_null", "n")
+    # El IPA agregado NO es la media de los IPA por landmark: es un cociente, y
+    # promediar cocientes no da el cociente de los promedios
+    # Brier = sum(ni*B_i)/sum(ni)
+    # IPA = 1 - Brier/Brier_null = 1 - sum(ni*B_i)/sum(ni)*B_null) que es justo lo que queriamos
+    ipa = 1 - brier / brier_null if brier_null > 0 else np.nan
 
     return {
         "c_index": pooled_cindex,
         "auroc": _wmean("auroc", "n"),
         "c_index_ipcw": _wmean("c_index_ipcw", "n_comparable"),
-        "brier": _wmean("brier", "n"),
-        "ipa": _wmean("ipa", "n"),
+        "brier": brier,
+        "ipa": ipa,
     }
 
 
@@ -560,6 +572,7 @@ for metric_key in SCALAR_METRIC_KEYS:
                 str(lm): {
                     "n_samples": m["n"],
                     "n_events": m["n_events"],
+                    "n_events_horizon": m["n_events_horizon"],
                     metric_key: _safe(m[metric_key]),
                 }
                 for lm, m in landmark_metrics_by_split[split_name].items()
