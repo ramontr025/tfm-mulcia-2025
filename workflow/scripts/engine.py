@@ -172,7 +172,9 @@ def collect_raw_outputs(loader, model, device):
         np.array(pids, dtype=object),
     )
 
+
 # Definición del engine para STraTS
+
 
 def run_strats_epoch(loader, model, device, optimizer=None):
     """Ejecuta una época de entrenamiento o validación."""
@@ -239,6 +241,7 @@ def run_strats_epoch(loader, model, device, optimizer=None):
         np.array(all_dur), -np.array(all_risks), np.array(all_ev, dtype=bool)
     )
     return mean_loss, ci
+
 
 def predict_STraTS(
     artifact: dict,

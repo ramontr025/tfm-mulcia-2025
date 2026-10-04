@@ -188,7 +188,9 @@ def raw_pad_collate_with_icd(batch):
         offsets_t,  # offsets para el modelo    (EmbeddingBag offsets)
     )
 
+
 # Dataset para STraTS
+
 
 class STraTSDataset(Dataset):
     """
@@ -265,9 +267,13 @@ class STraTSDataset(Dataset):
 
                 # 3. Unificar ambas fuentes de tripletas
                 if len(t_codes) > 0:
-                    t_all = np.concatenate([t_labs, np.array(t_codes, dtype=np.float32)])
+                    t_all = np.concatenate(
+                        [t_labs, np.array(t_codes, dtype=np.float32)]
+                    )
                     f_all = np.concatenate([f_labs, np.array(f_codes, dtype=np.int64)])
-                    v_all = np.concatenate([v_labs, np.array(v_codes, dtype=np.float32)])
+                    v_all = np.concatenate(
+                        [v_labs, np.array(v_codes, dtype=np.float32)]
+                    )
                 else:
                     t_all = t_labs
                     f_all = f_labs
@@ -321,7 +327,9 @@ class STraTSDataset(Dataset):
             float(np.mean([len(s["times"]) for s in self.samples])) if n else 0.0
         )
         self.mean_timesteps = (
-            float(np.mean([len(np.unique(s["times"])) for s in self.samples])) if n else 0.0
+            float(np.mean([len(np.unique(s["times"])) for s in self.samples]))
+            if n
+            else 0.0
         )
         self.mean_seq_len = self.mean_triplets
 
@@ -342,6 +350,7 @@ class STraTSDataset(Dataset):
             torch.tensor(s["weight"], dtype=torch.float32),
             s["pid"],
         )
+
 
 def strats_pad_collate(batch):
     """
@@ -364,8 +373,12 @@ def strats_pad_collate(batch):
     max_len = int(lengths.max()) if int(lengths.max()) > 0 else 1
 
     padded_times = nn.utils.rnn.pad_sequence(times, batch_first=True, padding_value=0.0)
-    padded_values = nn.utils.rnn.pad_sequence(values, batch_first=True, padding_value=0.0)
-    padded_features = nn.utils.rnn.pad_sequence(features, batch_first=True, padding_value=0)
+    padded_values = nn.utils.rnn.pad_sequence(
+        values, batch_first=True, padding_value=0.0
+    )
+    padded_features = nn.utils.rnn.pad_sequence(
+        features, batch_first=True, padding_value=0
+    )
     padded_time_since_index = nn.utils.rnn.pad_sequence(
         time_since_index, batch_first=True, padding_value=0.0
     )
@@ -375,16 +388,16 @@ def strats_pad_collate(batch):
     padding_mask = arange >= lengths.unsqueeze(1)
 
     return (
-        padded_values,            # (B, N_max) valores continuos o 1.0
-        padded_features.long(),   # (B, N_max) IDs de variables
-        padded_times,             # (B, N_max) timestamps absolutos (edades)
+        padded_values,  # (B, N_max) valores continuos o 1.0
+        padded_features.long(),  # (B, N_max) IDs de variables
+        padded_times,  # (B, N_max) timestamps absolutos (edades)
         padded_time_since_index,  # (B, N_max) tiempo relativo a index_age
-        padding_mask,             # (B, N_max) bool para src_key_padding_mask
-        lengths,                  # (B,)
-        torch.stack(sex_male),    # (B,)
-        torch.stack(durations),   # (B,)
-        torch.stack(events),      # (B,)
-        torch.stack(landmarks),   # (B,)
-        torch.stack(weights),     # (B,)
+        padding_mask,  # (B, N_max) bool para src_key_padding_mask
+        lengths,  # (B,)
+        torch.stack(sex_male),  # (B,)
+        torch.stack(durations),  # (B,)
+        torch.stack(events),  # (B,)
+        torch.stack(landmarks),  # (B,)
+        torch.stack(weights),  # (B,)
         list(ids),
     )

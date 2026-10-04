@@ -86,6 +86,23 @@ bootstrap:
 
 
 
+# ── eda (Stage 1.5) ──
+eda:
+  landmark_age_min: 45.0
+  landmark_age_max: 70.0
+  window_half_width: 1.0
+  batch_size: 5
+  max_gap_to_connect: 1.0
+  random_state: 0
+  tsne_perplexity: 30.0
+  tsne_n_iter: 1000
+  knn_n_neighbors: 5
+  pca_threshold_dim: 30
+  max_seq_len: 200
+  age_weight_gamma: 1.0
+
+
+
 # ── models to train and evaluate ──
 models:
   - name: grud

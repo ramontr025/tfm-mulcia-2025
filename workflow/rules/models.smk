@@ -18,7 +18,7 @@ rule train:
         num_heads=lambda wc: MODELS[wc.name].get("num_heads"),  # None para cox y secuenciales
         num_layers=lambda wc: MODELS[wc.name].get("num_layers"),  # None para cox y secuenciales
         dim_feedforward=lambda wc: MODELS[wc.name].get("dim_feedforward"),  # None para cox y secuenciales
-        dropout=lambda wc: MODELS[wc.name].get("dropout"),  
+        dropout=lambda wc: MODELS[wc.name].get("dropout"),
         demo_dim=lambda wc: MODELS[wc.name].get("demo_dim"),  # None para cox y secuenciales
         batch_size=lambda wc: MODELS[wc.name]["batch_size"],
         learning_rate=lambda wc: MODELS[wc.name]["learning_rate"],

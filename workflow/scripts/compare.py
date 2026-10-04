@@ -140,7 +140,15 @@ def _events_per_landmark(split):
         lm_dict = data.get("c_index", {}).get(split, {}).get("landmarks", {})
         if lm_dict:
             lms = sorted(int(k) for k in lm_dict.keys())
-            return np.array(lms), np.array([lm_dict[str(lm)].get("n_events_horizon", lm_dict[str(lm)]["n_events"]) for lm in lms], dtype=float,)
+            return np.array(lms), np.array(
+                [
+                    lm_dict[str(lm)].get(
+                        "n_events_horizon", lm_dict[str(lm)]["n_events"]
+                    )
+                    for lm in lms
+                ],
+                dtype=float,
+            )
 
     return np.array([]), np.array([])
 

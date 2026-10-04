@@ -255,6 +255,7 @@ class SimpleLSTM(nn.Module):
 
 # Definimos CVE y FusionAtt tal y como lo hacen en el repositorio del paper
 
+
 class CVE(nn.Module):
     """
     Continuous Value Embedding module (MLP 2 capas: 1 -> sqrt(d) -> d).
@@ -304,7 +305,9 @@ class FusionAtt(nn.Module):
         att = torch.softmax(att, dim=-1)  # (bsz, max_len)
         return att
 
+
 # Implementamos STraTS adaptandolo para que guarde similitud con los argumentos de entrada y las salidas que espera nuestro pipeline.
+
 
 class STraTS(nn.Module):
     """
@@ -364,28 +367,32 @@ class STraTS(nn.Module):
 
     def forward(
         self,
-        values,            # (B, N_max) float
-        features,          # (B, N_max) long
-        times,             # (B, N_max) float (edad exacta del evento)
+        values,  # (B, N_max) float
+        features,  # (B, N_max) long
+        times,  # (B, N_max) float (edad exacta del evento)
         time_since_index,  # (B, N_max) float
-        padding_mask,      # (B, N_max) bool (True for padding)
-        lengths,           # (B,) long
-        sex_male,          # (B,) float
+        padding_mask,  # (B, N_max) bool (True for padding)
+        lengths,  # (B,) long
+        sex_male,  # (B,) float
         **kwargs,
     ):
         # 1. Embeddings de los componentes de la tripleta (t, f, v)
-        t_emb = self.time_cve(times)             # (B, N_max, hid_dim)
-        f_emb = self.feature_emb(features)       # (B, N_max, hid_dim)
-        v_emb = self.val_cve(values)             # (B, N_max, hid_dim)
+        t_emb = self.time_cve(times)  # (B, N_max, hid_dim)
+        f_emb = self.feature_emb(features)  # (B, N_max, hid_dim)
+        v_emb = self.val_cve(values)  # (B, N_max, hid_dim)
 
         # Para diagnósticos ICD-10 (features >= lab_dim), anulamos el embedding continuo
         is_lab = (features < self.lab_dim).unsqueeze(-1).float()
-        v_emb = v_emb * is_lab # No tienen sentido los valores de continuo para los diagnosticos que se representan como valores binarios.
+        v_emb = (
+            v_emb * is_lab
+        )  # No tienen sentido los valores de continuo para los diagnosticos que se representan como valores binarios.
 
         triplet_emb = self.dropout(t_emb + f_emb + v_emb)  # (B, N_max, hid_dim)
 
         # 2. Transformer Encoder con máscara de padding
-        out = self.transformer_encoder(triplet_emb, src_key_padding_mask=padding_mask)  # (B, N_max, hid_dim)
+        out = self.transformer_encoder(
+            triplet_emb, src_key_padding_mask=padding_mask
+        )  # (B, N_max, hid_dim)
 
         # 3. Fusion Self-Attention pooling -> e^T
         real_mask = (~padding_mask).float()
@@ -399,7 +406,7 @@ class STraTS(nn.Module):
         e = torch.cat([e_T, e_d], dim=-1)  # (B, hid_dim + demo_dim)
         last_risk = self.head(e).squeeze(-1)  # (B,)
 
-        all_risks = None # Como transformer se ejecuta de manera paralela, no tiene pasos temporales definidos, por lo tanto devolvemos None
-        h_states = out # out ya son los estados de cada observacion, es decir, h_t
+        all_risks = None  # Como transformer se ejecuta de manera paralela, no tiene pasos temporales definidos, por lo tanto devolvemos None
+        h_states = out  # out ya son los estados de cada observacion, es decir, h_t
 
         return last_risk, all_risks, h_states

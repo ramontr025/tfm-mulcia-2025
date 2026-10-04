@@ -38,6 +38,7 @@ wildcard_constraints:
 rule all:
     input:
         expand("results/{split}/sequences.pkl", split=SPLITS),
+        "results/eda",
         expand("results/metrics/{name}.json", name=list(MODELS)),
         "results/comparison.csv",
         "results/comparison.png",
@@ -45,4 +46,5 @@ rule all:
 
 # ── Reglas ──
 include: "rules/ingest.smk"
+include: "rules/eda.smk"
 include: "rules/models.smk"

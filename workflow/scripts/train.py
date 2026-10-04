@@ -263,9 +263,7 @@ no_improve = 0
 epoch_fn = run_strats_epoch if arch_name == "strats" else run_raw_loss_epoch_icd
 
 for epoch in range(1, MAX_EPOCHS + 1):
-    train_loss, train_ci = epoch_fn(
-        train_loader, model, device, optimizer=optimizer
-    )
+    train_loss, train_ci = epoch_fn(train_loader, model, device, optimizer=optimizer)
     val_loss, val_ci = epoch_fn(val_loader, model, device, optimizer=None)
     scheduler.step(val_loss)
 
