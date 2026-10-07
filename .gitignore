@@ -33,3 +33,57 @@ MemoriaTFM/images/
 # Entorno virtual auxiliar 
 venv/
 .venv/
+
+# ─────────────────────────────────────────────────────────────────────────────
+# .gitignore — Snakemake · Pixi · Python pipeline
+#
+# Track SOURCE only: workflow/, config/, pixi.toml, pixi.lock, run.sh.
+# Ignore everything generated or large, and EVERY hidden (dot) directory.
+#
+# Raw inputs live OUTSIDE git — a fresh clone must supply, out of band:
+#   data/discovery/*.csv.gz, data/holdout/*.csv.gz   (raw Synthea CSVs)
+#   resources/snomed_icd10_map.csv                   (~100 MB SNOMED→ICD map)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# ── Pipeline data & generated outputs ──
+/data/
+/resources/
+/results/
+/out/
+# agents
+/spec/
+
+# logs/: ignore everything inside recursively (files AND subdirectories),
+# keep only the top-level folder tracked via .gitkeep.
+/logs/*
+!/logs/.gitkeep
+
+# ── Every hidden (dot) directory — mandatory, no exceptions.
+#    Covers .snakemake, .pixi, .venv, .pytest_cache, .mypy_cache,
+#    .ruff_cache, .ipynb_checkpoints, .vscode, .idea, .git, … ──
+.*/
+
+# ── Python (non-hidden) ──
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+build/
+dist/
+venv/
+env/
+
+# ── Large artifacts safety net (in case any land outside the dirs above) ──
+*.pkl
+*.pt
+*.parquet
+*.csv.gz
+
+# ── Editor / OS / secrets (files) ──
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.env
+.env.local
+sync.sh
