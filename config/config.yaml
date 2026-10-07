@@ -1,0 +1,176 @@
+# DTE pipeline — raw Synthea -> sequence pickles -> models.
+#
+# Every model consumes the SAME representation (the sequence pickles). There is no
+# pre-built cohort file: the cohort (Id, duration, event) is derived from raw
+# patients/conditions/observations.
+
+# Raw sources: two pools that never mix.
+#   discovery -> everything used to FIT the model comes from here (split into
+#                train/val below).
+#   holdout   -> the final test pool, separate from the source. Fitting never
+#                sees it; it only enters evaluation (issue 2).
+raw:
+  discovery:
+    patients: "data/discovery/patients.csv.gz"
+    conditions: "data/discovery/conditions.csv.gz"
+    observations: "data/discovery/observations.csv.gz"
+  holdout:
+    patients: "data/holdout/patients.csv.gz"
+    conditions: "data/holdout/conditions.csv.gz"
+    observations: "data/holdout/observations.csv.gz"
+
+# Recursos externos (fuera de git, ~100 MB): mapa SNOMED CT -> ICD-10 para traducir los
+# codigos de diagnostico crudos de Synthea a capitulos ICD-10.
+# extraido de https://thetuvaproject.com/terminology/snomed-to-icd10-map
+resources:
+  snomed_icd10_map: "resources/snomed_icd10_map.csv"
+
+# How discovery is split into train/val: patient-level, stratified by event, with
+# a fixed seed. holdout is not split further, it is already its own pool.
+splits:
+  train_frac: 0.80   # val_frac = 1 - train_frac
+  seed: 0
+
+# ── cohort construction (Stage 1) ──
+cohort:
+  index_age:    18.0   # edad de entrada a la cohorte
+  landmark_min: 45     # el analisis por landmark recorre range(45, 71)
+  landmark_max: 70
+  horizon:      5.0    # ventana de prediccion en años     
+  lung_cancer_snomed_codes:
+    - "254632001"       # Non-small cell lung cancer
+    - "254637007"       # Small cell lung cancer
+    - "424132000"       # Suspected lung cancer
+    - "67811000119102"  # Primary malignant neoplasm of lung
+
+# ── sequence representation (Stage 2) ──
+features:
+  lab_codes_to_keep:
+    - "8480-6"   # Systolic BP
+    - "8462-4"   # Diastolic BP
+    - "9279-1"   # Respiratory rate
+    - "8867-4"   # Heart rate
+    - "29463-7"  # Body Weight
+    - "8302-2"   # Body Height
+    - "39156-5"  # BMI
+    - "70274-6"  # GAD-7
+    - "718-7"    # Hemoglobin
+    - "777-3"    # Platelets
+    - "785-6"    # MCH
+    - "786-4"    # MCHC
+    - "787-2"    # MCV
+    - "32623-1"  # Platelet mean volume
+    - "32207-3"  # Platelet distribution width
+    - "4544-3"   # Hematocrit
+    - "6690-2"   # Leukocytes
+    - "789-8"    # Erythrocytes
+    - "21000-5"  # Erythrocyte distribution width
+    - "2085-9"   # HDL Cholesterol
+    - "2571-8"   # Triglycerides
+    - "2093-3"   # Total Cholesterol
+    - "18262-6"  # LDL Cholesterol
+  lab_codes_to_exclude: []
+  excluded_icd_initials: ["O", "Z", "V", "W", "X", "Y"]
+  outcome_icd_prefixes: ["C33", "C34"]
+
+
+
+# ── intervalos de confianza (eval, issue 2) ──
+# Los dos n_boot van separados porque su coste por replica es muy distinto: el de
+# por landmark evalua un landmark, el agrupado (cluster) los recorre los 26.
+bootstrap:
+  n_boot: 200          # replicas del bootstrap por landmark
+  n_boot_pooled: 100   # replicas del cluster bootstrap agrupado (mas caro por replica)
+  seed: 0
+  landmarks: "all"     # "all" = landmark_min..landmark_max de cohort
+
+
+
+# ── eda (Stage 1.5) ──
+eda:
+  landmark_age_min: 45.0
+  landmark_age_max: 70.0
+  window_half_width: 1.0
+  batch_size: 5
+  max_gap_to_connect: 1.0
+  random_state: 0
+  tsne_perplexity: 30.0
+  tsne_n_iter: 1000
+  knn_n_neighbors: 5
+  pca_threshold_dim: 30
+  max_seq_len: 200
+  age_weight_gamma: 1.0
+
+
+
+# ── models to train and evaluate ──
+models:
+  - name: grud
+    arch: grud
+    icd: 1
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 20
+    patience: 3
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+
+  - name: grud_labs
+    arch: grud
+    icd: 0
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 20
+    patience: 3
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+
+  - name: cox
+    arch: cox
+    icd: 1
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 100
+    patience: 20
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+    # sin hidden_dim: cox no tiene celda recurrente
+
+  - name: lstm
+    arch: lstm
+    icd: 1
+    hidden_dim: 32
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.01
+    max_epochs: 20
+    patience: 3
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0
+
+  - name: strats
+    arch: strats
+    icd: 1
+    hidden_dim: 32
+    num_heads: 4
+    num_layers: 2
+    dim_feedforward: 64
+    dropout: 0.2
+    demo_dim: 8
+    batch_size: 128
+    learning_rate: 0.001
+    weight_decay: 0.0001
+    max_epochs: 20
+    patience: 3
+    event_oversample: 3.0
+    max_seq_len: 200
+    age_weight_gamma: 1.0

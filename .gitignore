@@ -34,6 +34,7 @@ MemoriaTFM/images/
 venv/
 .venv/
 
+
 # ─────────────────────────────────────────────────────────────────────────────
 # .gitignore — Snakemake · Pixi · Python pipeline
 #
