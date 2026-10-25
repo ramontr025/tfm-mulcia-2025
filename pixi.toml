@@ -56,3 +56,5 @@ pyfmt = "ruff check --fix workflow/scripts/ && ruff format workflow/scripts/"
 # pasar entero, incluso con los TODO del issue sin implementar: dryrun no ejecuta los
 # scripts, solo comprueba que el pipeline se cablea. Correlo antes de empezar y al acabar.
 ok = { depends-on = ["dryrun", "smkfmt", "pyfmt", "dag", "rdag"] }
+# figs: copia las figuras del EDA a MemoriaTFM/images/ en PNG y PDF (no borra nada).
+figs = "python workflow/scripts/sync_figs.py"

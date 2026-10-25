@@ -81,10 +81,24 @@ env/
 *.csv.gz
 
 # ── Editor / OS / secrets (files) ──
-.DS_Store
-Thumbs.db
+.DS_StoreThumbs.db
 *.swp
 *~
 .env
 .env.local
 sync.sh
+
+# agentes
+AGENTS.md
+skills-lock.json
+
+#docs
+MemoriaTFM/docs
+
+# ── Excepción: etiquetas LOINC versionadas ──
+# resources/ y *.csv están ignorados por tamaño (mapa SNOMED de ~100 MB), pero el
+# fichero de etiquetas es fuente única de los nombres de las figuras del EDA y debe
+# viajar con el código. El resto de resources/ sigue ignorado.
+!/resources/
+/resources/*
+!/resources/loinc_labels.csv

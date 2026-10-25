@@ -1,3 +1,0 @@
-::: {#todo-intro}
-**TODO.** Contenido pendiente de redactar.
-:::

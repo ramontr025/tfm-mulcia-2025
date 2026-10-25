@@ -1,52 +1,67 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# Stage 1.5: EDA del tensor clinico longitudinal.
+# Stage 1.5: EDA de la cohorte (§4.1) y del tensor clinico longitudinal (§4.2).
 #
-# Una regla sola que lee el pickle de secuencias de train y produce un
-# directorio results/eda/ con figuras + un resumen JSON. El input es
-# results/train/sequences.pkl (el que consumen los modelos), asi el EDA
-# describe justo lo que entra al pipeline, no los crudos.
+# Una regla que lee los pickles de secuencias de los tres splits, las cuatro
+# cohortes, las estadisticas de normalizacion y las etiquetas de las analiticas, y
+# produce results/eda/ con: eda_summary.json (esquema 2.0 + procedencia), siete
+# tablas CSV y seis figuras en PNG 300 dpi + PDF.
 #
-# Filtro de modelo: el script pasa las secuencias por RawSequenceDatasetWithICD
-# (landmark truncation + max_events) y se queda con los pacientes que generan
-# al menos una muestra valida. Asi el EDA no cuenta secuencias que el modelo
-# descarta. Los hiperparametros de ese filtro (index_age, landmark_min/max,
-# max_events, age_weight_gamma) llegan de las mismas claves de config que usa
-# `train`, para que el EDA y el entrenamiento esten siempre sincronizados.
+# El protocolo (bloques, unidades y poblaciones) esta declarado en
+# MemoriaTFM/docs/03_metodos.md. Resumen:
+#   C  cohorte y Kaplan-Meier (train, val, holdout; discovery solo en el embudo)
+#   1  lo que ve el modelo en cada corte (muestra paciente-landmark)
+#   2  espaciado entre timesteps y muestreo informativo por paciente
+#   3  densidad de observacion por visita y por analitica
+#   4  redundancia (Jaccard por visita, orden jerarquico)
+#   5  magnitudes y contraste de la normalizacion con lab_stats.json
 #
-# Salida: directory("results/eda") con:
-#   trajectories.png, sparsity_visits.png, observability_load.png,
-#   cooccurrence.png, global_sparsity_heatmap.png, informative_sampling.png,
-#   tsne_landmarks.png, eda_summary.json
+# La vista de modelo sale de RawSequenceDatasetWithICD: el truncado por landmark y
+# max_events no se reimplementan (dataset.py). El EDA no escribe fuera de
+# results/eda/.
+#
+# Salida: directory("results/eda") con eda_summary.json, tables/*.csv y
+# figures/fig_{cohort,sample_coverage,time_structure,observation_density,
+# lab_redundancy,value_scale}.{png,pdf}
 # ─────────────────────────────────────────────────────────────────────────────
 
 
 rule eda:
     input:
-        sequences="results/train/sequences.pkl",
+        sequences=expand("results/{split}/sequences.pkl", split=SPLITS),
+        cohorts=expand(
+            "results/{split}/cohort.parquet",
+            split=["discovery", "train", "val", "holdout"],
+        ),
+        lab_stats="results/lab_stats.json",
+        labels="resources/loinc_labels.csv",
         dataset="workflow/scripts/dataset.py",
+        modules=[
+            "workflow/scripts/eda/__init__.py",
+            "workflow/scripts/eda/io.py",
+            "workflow/scripts/eda/views.py",
+            "workflow/scripts/eda/blocks.py",
+            "workflow/scripts/eda/plots.py",
+        ],
     output:
         directory("results/eda"),
     log:
         "logs/eda.log",
     params:
-        landmark_age_min=config["eda"]["landmark_age_min"],
-        landmark_age_max=config["eda"]["landmark_age_max"],
-        window_half_width=config["eda"]["window_half_width"],
-        batch_size=config["eda"]["batch_size"],
-        max_gap_to_connect=config["eda"]["max_gap_to_connect"],
-        random_state=config["eda"]["random_state"],
-        tsne_perplexity=config["eda"]["tsne_perplexity"],
-        tsne_n_iter=config["eda"]["tsne_n_iter"],
-        knn_n_neighbors=config["eda"]["knn_n_neighbors"],
-        pca_threshold_dim=config["eda"]["pca_threshold_dim"],
+        landmarks=LANDMARKS,
         index_age=config["cohort"]["index_age"],
-        landmark_min=config["cohort"]["landmark_min"],
-        landmark_max=config["cohort"]["landmark_max"],
-        max_events=config.get("eda", {}).get(
-            "max_seq_len", config.get("training", {}).get("max_seq_len", 200)
-        ),
-        age_weight_gamma=config.get("eda", {}).get(
-            "age_weight_gamma", config.get("training", {}).get("age_weight_gamma", 1.0)
-        ),
+        horizon=config["cohort"]["horizon"],
+        max_events=config["eda"].get("max_seq_len", 200),
+        age_weight_gamma=config["eda"].get("age_weight_gamma", 1.0),
+        seed=config["eda"]["seed"],
+        dpi=config["eda"]["dpi"],
+        figure_width_cm=config["eda"]["figure_width_cm"],
+        week_modulus_days=config["eda"]["week_modulus_days"],
+        day_multiple_tolerance=config["eda"]["day_multiple_tolerance"],
+        annual_mode_center_days=config["eda"]["annual_mode_center_days"],
+        jaccard_flag_threshold=config["eda"]["jaccard_flag_threshold"],
+        value_sigma_limit=config["eda"]["value_sigma_limit"],
+        labstats_z_mean_tol=config["eda"]["labstats_z_mean_tol"],
+        labstats_z_std_tol=config["eda"]["labstats_z_std_tol"],
+        age_bands=config["eda"]["age_bands"],
     script:
         "../scripts/EDA.py"

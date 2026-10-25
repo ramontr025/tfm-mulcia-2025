@@ -88,16 +88,24 @@ bootstrap:
 
 # ── eda (Stage 1.5) ──
 eda:
-  landmark_age_min: 45.0
-  landmark_age_max: 70.0
-  window_half_width: 1.0
-  batch_size: 5
-  max_gap_to_connect: 1.0
-  random_state: 0
-  tsne_perplexity: 30.0
-  tsne_n_iter: 1000
-  knn_n_neighbors: 5
-  pca_threshold_dim: 30
+  # parametros del protocolo (ver MemoriaTFM/docs/03_metodos.md)
+  seed: 0
+  dpi: 300
+  figure_width_cm: 12.8
+  week_modulus_days: 7
+  day_multiple_tolerance: 0.1
+  annual_mode_center_days: 371
+  jaccard_flag_threshold: 0.95
+  value_sigma_limit: 5.0
+  labstats_z_mean_tol: 0.01
+  labstats_z_std_tol: 0.01
+  age_bands:
+    - ["18-39", 18, 40]
+    - ["40-49", 40, 50]
+    - ["50-59", 50, 60]
+    - ["60-69", 60, 70]
+    - ["70+", 70, 120]
+  # vista de modelo: mismos valores que usa train
   max_seq_len: 200
   age_weight_gamma: 1.0
 

@@ -65,27 +65,29 @@ Para lograr esto, la celda LSTM incorpora una variable interna llamada **estado 
 ```mermaid
 graph TD
     subgraph Celda LSTM
-        xt[Entrada x_t] --> f_gate[Forget Gate: f_t]
-        xt --> i_gate[Input Gate: i_t]
-        xt --> c_cand[Candidato Celda: C~_t]
-        xt --> o_gate[Output Gate: o_t]
+        %% Entradas recurrentes y distribución
+        xt[Entrada x_t] --> comb["Vector Conjunto / Distribución: [x_t, h_t-1]"]
+        ht_prev[Estado Oculto Anterior h_t-1] --> comb
         
-        ht_prev[Estado Oculto Anterior h_t-1] --> f_gate
-        ht_prev --> i_gate
-        ht_prev --> c_cand
-        ht_prev --> o_gate
+        %% Ramificación hacia compuertas y candidato
+        comb --> f_gate[Forget Gate: f_t]
+        comb --> i_gate[Input Gate: i_t]
+        comb --> c_cand["Candidato Celda: C~_t"]
+        comb --> o_gate[Output Gate: o_t]
         
+        %% Línea de Estado de Celda (Cell State)
         Ct_prev[Estado Celda Anterior C_t-1] --> mul_f((x))
         f_gate --> mul_f
         
-        c_cand --> mul_i((x))
-        i_gate --> mul_i
+        i_gate --> mul_i((x))
+        c_cand --> mul_i
         
         mul_f --> add_c((+))
         mul_i --> add_c
         
         add_c --> Ct[Nuevo Estado Celda C_t]
         
+        %% Generación del nuevo Estado Oculto
         Ct --> tanh_c[tanh]
         tanh_c --> mul_o((x))
         o_gate --> mul_o
@@ -134,27 +136,28 @@ Esto se logra fusionando la compuerta de olvido y la compuerta de entrada en una
 ```mermaid
 graph TD
     subgraph Celda GRU
-        xt[Entrada x_t] --> z_gate[Update Gate: z_t]
-        xt --> r_gate[Reset Gate: r_t]
-        xt --> h_cand[Candidato Estado Oculto: h~_t]
+        %% Entradas recurrentes y distribución
+        xt[Entrada x_t] --> comb["Vector Conjunto / Distribución: [x_t, h_t-1]"]
+        ht_prev[Estado Oculto Anterior h_t-1] --> comb
         
-        ht_prev[Estado Oculto Anterior h_t-1] --> z_gate
-        ht_prev --> r_gate
+        %% Compuertas de control
+        comb --> r_gate[Reset Gate: r_t]
+        comb --> z_gate[Update Gate: z_t]
+        
+        %% Estado Candidato modulado por Reset
         ht_prev --> mul_r((x))
-        
         r_gate --> mul_r
+        
+        comb --> h_cand["Candidato: h~_t"]
         mul_r --> h_cand
         
-        ht_prev --> mul_z_prev((x: 1 - z_t))
-        z_gate --> mul_z_prev
+        %% Interpolación directa hacia el nuevo Estado Oculto (sin Cell State)
+        interp["Interpolación Convexa: h_t = (1 - z_t) ⊙ h_t-1 + z_t ⊙ h~_t"]
+        ht_prev --> interp
+        z_gate --> interp
+        h_cand --> interp
         
-        h_cand --> mul_z_cand((x: z_t))
-        z_gate --> mul_z_cand
-        
-        mul_z_prev --> add_h((+))
-        mul_z_cand --> add_h
-        
-        add_h --> ht[Nuevo Estado Oculto h_t]
+        interp --> ht[Nuevo Estado Oculto h_t]
     end
 ```
 
@@ -189,42 +192,49 @@ El modelo **GRU-D** (propuesto por Zhengping Che et al. en 2018) es una arquitec
 
 ```mermaid
 graph TD
-    subgraph Celda GRU-D
-        xt[Entrada x_t] --> input_decay[Input Decay: x^_t]
-        xt_prev_obs[Última Obs x_t'] --> input_decay
-        mean_x[Media Empírica x~] --> input_decay
-        delta_t[Intervalo Tiempo delta_t] --> gamma_x[Trainable Decay gamma_x]
-        delta_t --> gamma_h[Trainable Decay gamma_h]
-        gamma_x --> input_decay
+    subgraph Celda_GRUD["Celda GRU-D"]
         
-        ht_prev[Estado Oculto Anterior h_t-1] --> hidden_decay[Hidden Decay: h^_t-1]
-        gamma_h --> hidden_decay
+        subgraph F1["Fase 1: Decaimientos Temporales e Imputación"]
+            delta_t["Intervalo Temporal: δ_t"]
+            delta_t --> gamma_x["Decaimiento Entrada: γ_x = exp(-ReLU(W_γx δ_t + b_γx))"]
+            delta_t --> gamma_h["Decaimiento Oculto: γ_h = exp(-ReLU(W_γh δ_t + b_γh))"]
+            
+            xt["Entrada actual: x_t"] --> x_hat["Entrada Imputada con Decaimiento: x̂_t"]
+            xt_prev["Última obs: x_t'"] --> x_hat
+            mean_x["Media empírica: x̃"] --> x_hat
+            gamma_x --> x_hat
+            
+            ht_prev["Estado oculto previo: h_t-1"] --> h_hat["Estado Oculto Decaído: ĥ_t-1"]
+            gamma_h --> h_hat
+            
+            mt["Vector de Máscara: m_t"]
+        end
+
+        subgraph F2["Fase 2: Compuertas de Control y Candidato Recurrente"]
+            bus_gates["Bus de Entrada Conjunta: [x̂_t, ĥ_t-1, m_t]"]
+            x_hat --> bus_gates
+            h_hat --> bus_gates
+            mt --> bus_gates
+            
+            bus_gates --> r_gate["Reset Gate: r_t = σ(W_r x̂ + U_r ĥ + V_r m + b_r)"]
+            bus_gates --> z_gate["Update Gate: z_t = σ(W_z x̂ + U_z ĥ + V_z m + b_z)"]
+            
+            r_gate --> mul_r["Atenuación Recurrente: r_t ⊙ ĥ_t-1"]
+            h_hat --> mul_r
+            
+            mul_r --> h_cand["Estado Candidato: h̃_t = tanh(W_h x̂ + U_h(r_t ⊙ ĥ) + V_h m + b_h)"]
+            bus_gates -.->|"x̂_t, m_t"| h_cand
+        end
+
+        subgraph F3["Fase 3: Interpolación y Actualización"]
+            interp["Interpolación Convexa: h_t = (1 - z_t) ⊙ ĥ_t-1 + z_t ⊙ h̃_t"]
+            h_hat --> interp
+            z_gate --> interp
+            h_cand --> interp
+            
+            interp --> ht["Nuevo Estado Oculto: h_t"]
+        end
         
-        input_decay --> z_gate[Update Gate: z_t]
-        input_decay --> r_gate[Reset Gate: r_t]
-        input_decay --> h_cand[Candidato h~_t]
-        
-        hidden_decay --> z_gate
-        hidden_decay --> r_gate
-        hidden_decay --> mul_r((x))
-        
-        r_gate --> mul_r
-        mul_r --> h_cand
-        
-        mt[Máscara m_t] --> z_gate
-        mt --> r_gate
-        mt --> h_cand
-        
-        hidden_decay --> mul_z_prev((x: 1 - z_t))
-        z_gate --> mul_z_prev
-        
-        h_cand --> mul_z_cand((x: z_t))
-        z_gate --> mul_z_cand
-        
-        mul_z_prev --> add_h((+))
-        mul_z_cand --> add_h
-        
-        add_h --> ht[Nuevo Estado Oculto h_t]
     end
 ```
 

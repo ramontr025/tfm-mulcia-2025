@@ -1,0 +1,15 @@
+Los tres objetivos de @sec-1-4 se pueden cerrar con la evidencia que ya está sobre la mesa. No hay resultados nuevos en lo que sigue ni debate abierto, solo el balance de qué se cumplió y con qué.
+
+## Cierre de objetivos {#sec-7-1}
+
+El pipeline quedó construido y ejecutado de extremo a extremo. Una sola orden encadena la partición de la cohorte, el análisis exploratorio, los cinco entrenamientos, las cinco evaluaciones y la comparación, y el catálogo de modelos vive en el fichero de configuración, de modo que añadir una arquitectura consiste en añadir un bloque.
+
+La representación se resolvió por arquitectura y no con una codificación única. Los cinco modelos parten de la misma cohorte (12 069 pacientes en train, 3 018 en validación y 15 346 en `holdout`), de las mismas secuencias construidas una sola vez y de los mismos 26 cortes entre los 45 y los 70 años con un horizonte de cinco años. Cada arquitectura recibe esa historia en la forma que su mecanismo admite, y la comparación sigue siendo justa porque el dato de partida es el mismo y el filtro de variables reveladoras se aplica a todas.
+
+La comparación se hizo bajo un protocolo idéntico para los cinco, incluida la variante sin códigos de diagnóstico. Los cinco modelos tienen sus cinco métricas con intervalo de confianza en el mismo formato de artefacto.
+
+
+## Reflexión final {#sec-7-2}
+
+Lo que este trabajo deja es un método, y las cifras que lo acompañan son de un generador sintético. El pipeline, el protocolo común de cohorte, rejilla y horizonte, y el aparato de evaluación con reponderación por censura y bootstrap son piezas que no dependen del generador y que se pueden aplicar a un registro real sin cambios de fondo. Los números, en cambio, describen lo que hacen estos modelos sobre estos datos, y no hay razón para esperar que se sostengan fuera de ellos.
+

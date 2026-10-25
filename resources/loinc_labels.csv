@@ -1,0 +1,24 @@
+lab_code,lab_name_es,lab_short_es,lab_name_en,group
+8480-6,Presión arterial sistólica,Sistólica,Systolic blood pressure,Signos vitales
+8462-4,Presión arterial diastólica,Diastólica,Diastolic blood pressure,Signos vitales
+9279-1,Frecuencia respiratoria,Frec. respiratoria,Respiratory rate,Signos vitales
+8867-4,Frecuencia cardíaca,Frec. cardíaca,Heart rate,Signos vitales
+29463-7,Peso corporal,Peso,Body weight,Antropometría
+8302-2,Talla corporal,Talla,Body height,Antropometría
+39156-5,Índice de masa corporal,IMC,Body mass index (BMI) [Ratio],Antropometría
+70274-6,Cuestionario GAD-7,GAD-7,Generalized anxiety disorder 7 item (GAD-7) total score [Reported.PHQ],Cuestionario
+718-7,Hemoglobina,Hemoglobina,Hemoglobin [Mass/volume] in Blood,Hemograma
+777-3,Plaquetas,Plaquetas,Platelets [#/volume] in Blood by Automated count,Hemograma
+785-6,Hemoglobina corpuscular media,HCM,MCH [Entitic mass] by Automated count,Hemograma
+786-4,Concentración de hemoglobina corpuscular media,CHCM,MCHC [Entitic Mass/volume] in Red Blood Cells by Automated count,Hemograma
+787-2,Volumen corpuscular medio,VCM,MCV [Entitic mean volume] in Red Blood Cells by Automated count,Hemograma
+32623-1,Volumen plaquetario medio,VPM,Platelet [Entitic mean volume] in Blood by Automated count,Hemograma
+32207-3,Amplitud de distribución plaquetaria,ADE plaquetas,Platelet distribution width [Entitic volume] in Blood by Automated count,Hemograma
+4544-3,Hematocrito,Hematocrito,Hematocrit [Volume Fraction] of Blood by Automated count,Hemograma
+6690-2,Leucocitos,Leucocitos,Leukocytes [#/volume] in Blood by Automated count,Hemograma
+789-8,Hematíes,Hematíes,Erythrocytes [#/volume] in Blood by Automated count,Hemograma
+21000-5,Amplitud de distribución eritrocitaria,ADE hematíes,Erythrocyte distribution width [Entitic volume] by Automated count,Hemograma
+2085-9,Colesterol HDL,HDL,Cholesterol in HDL [Mass/volume] in Serum or Plasma,Lípidos
+2571-8,Triglicéridos,Triglicéridos,Triglyceride [Mass/volume] in Serum or Plasma,Lípidos
+2093-3,Colesterol total,Colesterol total,Cholesterol [Mass/volume] in Serum or Plasma,Lípidos
+18262-6,Colesterol LDL,LDL,Cholesterol in LDL [Mass/volume] in Serum or Plasma by Direct assay,Lípidos

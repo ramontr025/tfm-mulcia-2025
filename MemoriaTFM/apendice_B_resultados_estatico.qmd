@@ -68,7 +68,8 @@ A las las métricas críticas evaluadas (F1-score, Precision y Recall) fueron a�
 
 Los resultados confirmaron que el modelo basado únicamente en variables de laboratorio tiene un rendimiento significativamente inferior al modelo completo, aunque sigue mostrando una capacidad predictiva razonable teniendo en cuenta que estás tomando solo unas pocas variables muy generales. No obstante, estos resultados son mucho más realistas y plausibles que los obtenidos en el modelo completo.
 
-![Curvas PR-AUC y ROC-AUC del modelo con variables de laboratorio.](images/pr_roc_modelo_lab.png){width="100%"}
+<!-- FIGURA FALTANTE (preexistente): pr_roc_modelo_lab.png. Original: ![Curvas PR-AUC y ROC-AUC
+     del modelo con variables de laboratorio.](images/pr_roc_modelo_lab.png){width="100%"} -->
 
 ## Modelo solo con variables de CIE-10 diagnósticos.
 
@@ -82,7 +83,8 @@ Estadísticamente, estas variables (al ser binarias) siguen una distribución Be
 
 En las siguientes gráficas se muestra la distribución de las variables de diagnóstico mapeadas a CIE-10 en la cohorte, comparando entre pacientes con cáncer de pulmón y sin cáncer de pulmón. Se observa que todas las variables muestran diferencias marcadas en su distribución, lo cual no suele ocurrir y que explica en parte el inversímil rendimiento de los modelos.
 
-![Distribución de las variables de CIE-10 en la cohorte.](images/comparativa_distr_var_cie.png){width="100%"}
+<!-- FIGURA FALTANTE (preexistente): comparativa_distr_var_cie.png. Original: ![Distribución de
+     las variables de CIE-10 en la cohorte.](images/comparativa_distr_var_cie.png){width="100%"} -->
 
 ### Metodología y Búsqueda de Hiperparámetros (Tuning)
 
@@ -103,10 +105,12 @@ A las las métricas críticas evaluadas (F1-score, Precision y Recall) fueron a�
 : "Métricas de evaluación en conjunto de test del modelo con variables de CIE-10."
 :::
 
-![Curvas PR-AUC y ROC-AUC del modelo con variables de CIE-10.](images/pr_roc_modelo_cie.png){width="100%"}
+<!-- FIGURA FALTANTE (preexistente): pr_roc_modelo_cie.png. Original: ![Curvas PR-AUC y ROC-AUC
+     del modelo con variables de CIE-10.](images/pr_roc_modelo_cie.png){width="100%"} -->
 
 ## Evaluación del modelo en nuevas cohortes
 
 Usaremos el modelo con resultados más realistas (modelo con variables de laboratorio) para evaluar su rendimiento en nuevas cohortes de pacientes, sin necesidad de reentrenar el modelo. Para ello, se han cargado nuevos conjuntos de datos de pacientes con cáncer de pulmón y sin cáncer de pulmón, y se han aplicado los mismos preprocesamientos que se realizaron en el conjunto de entrenamiento.
 
-![Evaluación del modelo de solo analíticas en nuevas cohortes.](images/evaluacion_nuevas_cohortes.png){width="100%"}
+<!-- FIGURA FALTANTE (preexistente): evaluacion_nuevas_cohortes.png. Original: ![Evaluación
+     del modelo de solo analíticas en nuevas cohortes.](images/evaluacion_nuevas_cohortes.png){width="100%"} -->

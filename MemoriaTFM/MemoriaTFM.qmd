@@ -1,10 +1,16 @@
 ---
 title: Cribado de cáncer de pulmón
 author: Ramón Trinidad Acedo
-resumen: Tu resumen aquí
-palabras-clave: [Palabra01, Palabra02]  
-abstract: Tu resumen en inglés aquí
-keywords: [Word01, Word02]
+resumen: |
+  El cribado del cáncer de pulmón consiste en decidir a quién se le hace una prueba antes de que aparezcan síntomas, y esa decisión se apoya cada vez más en modelos de riesgo construidos sobre la historia clínica. Esta memoria compara cinco de ellos sobre una cohorte sintética de Synthea: un modelo de Cox con la última observación arrastrada, una LSTM, dos GRU-D que se distinguen por recibir o no los códigos de diagnóstico, y una adaptación del transformer STraTS. Los cinco comparten cohorte, representación, 26 puntos de corte entre los 45 y los 70 años y un horizonte de predicción de cinco años, y se evalúan en un pool de holdout con C-index IPCW, AUROC a horizonte, Brier IPCW e índice de precisión, todos con intervalos por bootstrap agrupado a nivel de paciente.
+  Los cuatro modelos secuenciales se agrupan entre 0,902 y 0,934 de AUROC y entre 0,769 y 0,804 de C-index IPCW, y todos baten al modelo nulo. Cox se queda en 0,758 de AUROC aunque su C-index sea comparable al de los demás, lo que muestra que ordena a los pacientes sin llegar a calibrar el riesgo a cinco años. La discriminación no separa a los secuenciales entre sí, y donde la evidencia separa es en el índice de precisión, con STraTS y la LSTM por encima de los dos GRU-D. La ablación de los códigos de diagnóstico no cambia las cifras de forma concluyente.
+  El análisis exploratorio explica parte del resultado. El 79 % de las muestras no tiene ninguna analítica anterior al corte, los pacientes que desarrollan el cáncer se miden con más frecuencia y la secuencia se trunca a 200 posiciones, lo que penaliza más al transformer que a los modelos recurrentes. La conclusión es que el protocolo pesa más que la arquitectura, y que estas cifras describen un generador y no una población real.
+palabras-clave: [cribado de cáncer de pulmón, series temporales irregulares, análisis de supervivencia, transformers, GRU-D]  
+abstract: |
+  Lung cancer screening comes down to deciding who gets a test before symptoms appear, and that decision relies increasingly on risk models built from the clinical history. This thesis compares five of them on a synthetic cohort from Synthea: a Cox model with last observation carried forward, an LSTM, two GRU-D models that differ only in whether they receive diagnosis codes, and an adaptation of the STraTS transformer. All five share the cohort, the representation, 26 cut-off points between ages 45 and 70 and a five-year prediction horizon, and are evaluated on a holdout pool with IPCW C-index, time-dependent AUROC, IPCW Brier and the index of prediction accuracy, each with patient-level cluster bootstrap intervals.
+  The four sequential models fall between 0.902 and 0.934 AUROC and between 0.769 and 0.804 IPCW C-index, and all of them beat the null model. Cox stays at 0.758 AUROC although its C-index is comparable, which shows that it ranks patients without calibrating the five-year risk. Discrimination does not separate the sequential models from one another, and the evidence separates them on the index of prediction accuracy, where STraTS and the LSTM sit above both GRU-D models. Ablating the diagnosis codes does not change the figures conclusively.
+  The exploratory analysis accounts for part of the result. Seventy-nine per cent of the samples have no laboratory measurement before the cut-off, patients who develop cancer are measured more often, and sequences are truncated at 200 positions, which penalises the transformer more than the recurrent models. The conclusion is that the protocol weighs more than the architecture, and that these figures describe a generator rather than a real population.
+keywords: [lung cancer screening, irregular time series, survival analysis, transformers, GRU-D]
 agradecimientos: Tus agradecimientos aquí
 lang: es
 date: today
@@ -26,7 +32,7 @@ format:
     titulacion: "Máster Universitario en Lógica, Computación en Inteligencia Artificial"
     tipo-TFG: "TRABAJO FIN DE MÁSTER"
     tutor-TFG: "Tutor: Carlos Loucera Muñecas"
-    fecha-TFG: "Sevilla, Marzo de 2026"
+    fecha-TFG: "Sevilla, Julio de 2026"
     nombre-capitulo: "CAPÍTULO"
     apendice-portada: "Apéndice"
     apendice-nombre: "Apéndice"
@@ -51,71 +57,33 @@ execute:
 ---
 
 # Introducción
-{{< include introduccion.qmd >}}
+{{< include 01_introduccion.qmd >}}
 
-# Contexto y motivación
-{{< include contexto.qmd >}}
+# Materiales
+{{< include 02_materiales.qmd >}}
 
-# Presentación de los datos
-{{< include datos.qmd >}}
+# Métodos
+{{< include 03_metodos.qmd >}}
 
-# Análisis exploratorio de las secuencias
-{{< include exploratorio.qmd >}}
+# Resultados
+{{< include 04_resultados.qmd >}}
 
-# Redes neuronales recurrentes: LSTM, GRU y GRU-D
-{{< include teoria.qmd >}}
+# Discusión
+{{< include 05_discusion.qmd >}}
 
-# Aplicación del modelo GRU-D
-{{< include aplicacion.qmd >}}
-
-# Evaluación de resultados
-{{< include evaluacion.qmd >}}
+# Limitaciones y trabajo futuro
+{{< include 06_limitaciones.qmd >}}
 
 # Conclusiones
-{{< include conclusiones.qmd >}}
+{{< include 07_conclusiones.qmd >}}
 
 {{< appendix >}}
 
-# Apéndice A. Modelo predictivo estático
-{{< include capitulo01.qmd >}}
+# Modelo predictivo estático sobre corte transversal {#sec-apendice-a}
+{{< include apendice_A_modelo_estatico.qmd >}}
 
-# Apéndice B. Resultados y evaluación del modelo estático
-{{< include capitulo02.qmd >}}
+# Resultados y evaluación del modelo estático
+{{< include apendice_B_resultados_estatico.qmd >}}
 
-# Apéndice C. Atributos reveladores de cáncer de pulmón
-
-## Variables eliminadas por riesgo de data leakage
-
-::: {#tbl-reveladoras-cancer}
-| Código | Descripción |
-|:---|:---|
-| C-33756-8 | Polyp size greatest dimension by CAP cancer protocols |
-| C-88040-1 | Response to cancer treatment |
-| C-59557-9 | Treatment status Cancer |
-| C-21908-9 | Stage group.clinical Cancer |
-| C-85318-4 | HER2 [Presence] in Breast cancer specimen by FISH |
-| C-85319-2 | HER2 [Presence] in Breast cancer specimen by Immune stain |
-| C-85337-4 | Estrogen receptor Ag [Presence] in Breast cancer specimen by Immune stain |
-| C-85339-0 | Progesterone receptor Ag [Presence] in Breast cancer specimen by Immune stain |
-| C-21924-6 | Tumor marker Cancer |
-| C-367336001 | Chemotherapy (procedure) |
-| C-703423002 | Combined chemotherapy and radiation therapy |
-| C-108290001 | Radiation oncology AND/OR radiotherapy |
-| C-385798007 | Radiation therapy care |
-| C-597195 | Carboplatin 10 MG/ML Injectable Solution |
-| C-583214 | Paclitaxel 100 MG Injection |
-| C-1860480 | DOCEtaxel 20 MG/ML Injection |
-| C-1734919 | Cyclophosphamide 1000 MG Injection |
-| C-429609002 | Lung volume reduction surgery |
-| C-88039007 | Transplant of lung |
-| C-232657004 | Lung Transplant |
-| scc | Squamous Cell Carcinoma Antigen |
-
-: "Variables y marcadores reveladores de estado oncológico eliminados para prevenir data leakage."
-:::
-
-
-
-
-
-
+# Atributos reveladores de cáncer de pulmón
+{{< include apendice_C_reveladoras.qmd >}}

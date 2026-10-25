@@ -1,3 +1,0 @@
-::: {#todo-contexto}
-**TODO.** Contenido pendiente de redactar.
-:::

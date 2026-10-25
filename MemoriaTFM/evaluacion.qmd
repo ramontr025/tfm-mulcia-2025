@@ -1,3 +1,0 @@
-::: {#todo-evaluacion}
-**TODO.** Contenido pendiente de redactar.
-:::

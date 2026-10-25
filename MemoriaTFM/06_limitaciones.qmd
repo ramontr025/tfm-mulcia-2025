@@ -1,0 +1,54 @@
+Ningún resultado de esta memoria está libre de condiciones. Unas vienen del código, porque el transformer no encaja en el contrato común de los modelos recurrentes. Otras vienen del dato, porque la cohorte es sintética y el generador no está documentado hasta el último detalle. A esas dos se suman ocho amenazas a la validez, y el final del capítulo recoge el trabajo que las cerraría.
+
+## Límites del contrato común de encoder ante arquitecturas no recurrentes {#sec-6-1}
+
+Los cuatro modelos recurrentes comparten un mismo contrato de entrada. Cada lote llega como trece elementos (analíticas, máscaras de observación, intervalos entre visitas, longitudes, sexo, tiempo desde la fecha índice, códigos de diagnóstico aplanados con sus desplazamientos, duraciones, eventos, edades de landmark, pesos e identificadores de paciente) y el modelo los recibe por posición. Ese contrato funciona porque GRU-D y LSTM esperan la misma forma de tensor, y es lo que permite que el bucle de evaluación sea uno solo para los cuatro.
+
+STraTS no encaja en él. Consume la historia como una secuencia de tripletas (instante, variable, valor), su lote tiene doce elementos y su función de avance recibe argumentos por nombre en lugar de por posición. Ante esa diferencia, el pipeline no amplió el contrato común: escribió un adaptador paralelo que recopila las predicciones del transformer por su cuenta. El transformer no es incompatible con la evaluación: el adaptador devuelve la misma tupla de predicciones y las métricas se calculan con las mismas funciones para los cinco modelos. El problema es de contrato: no se pudo extender y hubo que bifurcarlo, con un coste de mantenimiento que no afecta a la comparación.
+
+El coste de esa bifurcación es de mantenimiento, dos rutas de recolección que hay que mantener sincronizadas, con el riesgo de que una corrección aplicada en una no llegue a la otra. A ello se suma un límite de la adaptación que comparten las dos familias, porque tanto los modelos recurrentes como el transformer truncan la secuencia a los 200 eventos anteriores al landmark. El efecto no es el mismo en ambos casos, porque la unidad de la secuencia no es la misma. Los recurrentes trabajan con instantes, de modo que cada posición agrupa todas las analíticas y los diagnósticos de una misma fecha, mientras que el transformer trabaja con eventos y cada posición es una medición suelta. Con el mismo tope de 200 posiciones, el transformer cubre menos tiempo clínico y atiende a una historia más corta. A eso se añade que devuelve un riesgo escalar por muestra y no una trayectoria de riesgos a lo largo del tiempo.
+
+
+## Límites del dato sintético {#sec-6-2}
+
+Ninguna conclusión de esta memoria describe pacientes reales. Los autores de Synthea advierten que sus registros son realistas pero no reales y que no son lo bastante ricos para la investigación clínica, y el trabajo del que proceden estos ficheros cierra su discusión diciendo que el modelo resultante no puede usarse en la asistencia real [@walonoski2018synthea; @chen2022simulation].
+
+Lo que sobreviviría a datos reales es la parte metodológica, o sea todo el pipeline de extremo a extremo, el protocolo común de cohorte, rejilla de landmarks y horizonte, la maquinaria de evaluación con reponderación por censura y bootstrap, y la documentación de las decisiones de diseño. Nada de eso depende del generador.
+
+Lo que no sobreviviría son los valores. Los cinco juegos de métricas describen el comportamiento de los modelos sobre este generador, así que no hay razón para esperar que se mantengan. La conclusión sobre los códigos de diagnóstico es el caso más claro, porque en una historia clínica real esos códigos proceden de la práctica asistencial y pueden ser mucho más informativos que en una población simulada. 
+
+Queda un límite de trazabilidad que afecta a la reproducibilidad. La versión del generador no consta ni en el artículo ni en su material complementario, así que los ficheros no pueden regenerarse con exactitud desde su descripción, y la semilla con la que se produjeron tampoco está documentada. Los datos, eso sí, están identificados y son los mismos que publicó el trabajo de referencia.
+
+
+## Amenazas a la validez {#sec-6-3}
+
+Estas son las amenazas que pueden discutirse al resultado, con la evidencia que las sostiene y lo que no permiten concluir. Las cuatro primeras estaban ya identificadas, las cuatro últimas se añaden tras comprobar el alcance de cada una.
+
+### Riesgos competitivos tratados como censura independiente {#sec-6-3-1}
+
+La cohorte define el evento como el primer diagnóstico de cáncer de pulmón y cierra el seguimiento por prioridad: diagnóstico, después muerte y después último contacto. Un paciente que muere sin diagnóstico queda por tanto censurado en la fecha de su muerte, y la evaluación trata esa censura como independiente del riesgo. El aparato de métricas está construido para censura a la derecha con reponderación por la inversa de la probabilidad de censura, y no incorpora ningún modelo de riesgos competitivos. La consecuencia es que las probabilidades deben leerse como riesgo de diagnóstico mientras el paciente siga vivo y en seguimiento, no como probabilidad de enfermar a lo largo de la vida.
+
+### Una sola semilla por modelo {#sec-6-3-2}
+
+Cada modelo se entrena una vez. La partición de `discovery` en train y validación usa una semilla fija y los bootstrap también, pero no hay réplicas de entrenamiento ni semilla de inicialización en el código de entrenamiento, de modo que los pesos no son reproducibles bit a bit y no existe una medida de la variabilidad entre entrenamientos. Los intervalos que acompañan a todas las métricas son de bootstrap sobre el conjunto de evaluación, es decir, cubren el remuestreo de pacientes y no la varianza de inicialización: dos ejecuciones del mismo pipeline pueden dar cifras distintas sin que eso sea un error de cálculo.
+
+### Ausencia de línea base clínica y de validación externa {#sec-6-3-3}
+
+Los cinco modelos se comparan entre sí y contra un modelo nulo estadístico, pero ninguno se compara contra un modelo de riesgo clínico establecido, del tipo cuestionario estático con un puñado de predictores. Tampoco hay validación externa, ya que, aunque `holdout` es una población distinta de `discovery`, sale del mismo generador y del mismo proceso de construcción, así que mide capacidad de generalización dentro del simulador y no traslado a otra población. Es la amenaza que más acota el alcance de la comparación, porque las diferencias entre modelos pueden convivir con un rendimiento absoluto distinto en cuanto cambie la población.
+
+### STraTS sin preentrenamiento autosupervisado {#sec-6-3-4}
+
+El transformer se entrenó desde cero y solo con la verosimilitud parcial de Cox, mientras que la arquitectura publicada se apoya en una tarea auxiliar de predicción de valores observados que se entrena primero y se afina después. El artículo distingue dos variantes en su estudio de ablación, ss- y ss+, que se refieren a los modelos entrenados sin y con autosupervisión respectivamente [@tipirneni2022strats]. La adaptación conserva el codificador pero no la fase previa, así que lo que se evalúa aquí equivale a ss-, de modo que la comparación mide el rendimiento de STraTS con este pipeline y no el de STraTS en su forma publicada. Es un límite de fidelidad al método citado y, a la vez, una desventaja concreta para el transformer frente a los modelos recurrentes, que no tienen una fase equivalente.
+
+
+## Trabajo futuro {#sec-6-4}
+
+Casi todo lo anterior se traduce en trabajo concreto:
+
+- Semillas y réplicas: entrenar cada modelo con varias semillas y reportar la varianza entre entrenamientos, además del intervalo por bootstrap que ya existe. Es el cambio más barato y el que más refuerza cualquier afirmación comparativa, porque hoy solo se puede hablar de un entrenamiento por arquitectura.
+- Preentrenamiento autosupervisado de STraTS: recuperar la tarea auxiliar de predicción de valores observados del artículo original antes del ajuste con la pérdida de Cox. Es lo que permitiría comparar el transformer en las condiciones en que se propuso.
+- Una línea base clínica y validación externa: añadir un modelo de riesgo establecido al catálogo, con su cuestionario estático, y repetir la evaluación sobre una cohorte real de otra procedencia. Sin ese paso, las diferencias entre arquitecturas no dicen nada sobre su utilidad en cribado.
+- Riesgos competitivos: sustituir la censura por muerte por un modelo de riesgos competitivos, con la muerte por otras causas como evento que compite con el diagnóstico, y recalcular la incidencia con esa estructura. Es lo que permitiría leer las probabilidades como riesgo de enfermar a lo largo de la vida y no como riesgo mientras el paciente siga vivo y en seguimiento.
+
+A esa lista se suman dos mejoras de ingeniería que salen del propio análisis, unificar el contrato de recolección de predicciones para que el transformer deje de tener una ruta propia y revisar el truncamiento de historias largas, porque el recorte deja fuera la cola de las historias más largas.
+
