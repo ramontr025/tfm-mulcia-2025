@@ -192,6 +192,7 @@ def block_timing(
     history: pd.DataFrame,
     samples: pd.DataFrame,
     cohort_train: pd.DataFrame,
+    index_age: float,
     horizon: float,
     week_days: float,
     week_tolerance_days: float,
@@ -308,18 +309,23 @@ def block_timing(
         ):
             add("train_12069", "all", "par de timesteps", metric, value, n_pairs)
 
-    # Muestreo informativo: tasa por paciente sobre la vista de modelo.
+    # Muestreo informativo: tasa por paciente sobre la vista de modelo. El numerador
+    # cuenta solo las visitas dentro de la ventana del denominador, de la edad índice
+    # al final del seguimiento: la secuencia no se corta en el diagnóstico, y sin
+    # acotarla las analíticas del tratamiento inflarían la tasa de los casos.
     duration = dict(
         zip(cohort_train["Id"].astype(str), cohort_train["duration"].astype(float))
     )
     event = dict(zip(cohort_train["Id"].astype(str), cohort_train["event"].astype(int)))
-    visits = dict(zip(history["pid"].astype(str), history["n_lab_visits"].astype(int)))
+    lab_ages = dict(zip(history["pid"].astype(str), history["lab_visit_ages"]))
     rates: dict[int, list[float]] = {0: [], 1: []}
     for pid in sorted(samples["pid"].unique()):
-        if pid not in duration or pid not in visits:
+        if pid not in duration or pid not in lab_ages:
             continue
+        end_age = index_age + float(duration[pid])
+        in_window = (lab_ages[pid] >= index_age) & (lab_ages[pid] <= end_age)
         denom = max(float(duration[pid]), 1e-6)
-        rates[int(event.get(pid, 0))].append(visits[pid] / denom)
+        rates[int(event.get(pid, 0))].append(int(in_window.sum()) / denom)
     r0 = np.array(rates[0], dtype=float)
     r1 = np.array(rates[1], dtype=float)
     delta = p_value = None

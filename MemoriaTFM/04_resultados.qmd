@@ -40,7 +40,7 @@ La cobertura depende de la edad. La proporción de muestras sin analítica baja 
 
 ### Muestreo informativo {#sec-4-2-2}
 
-La @fig-muestreo compara la frecuencia de medición de los pacientes según su desenlace. Para cada uno de los 9 917 pacientes del modelo se calcula la tasa de visitas con analítica por año de seguimiento. La mediana es de 0,260 visitas al año en los pacientes sin evento y de 0,699 en los que lo desarrollan, con un contraste de Mann-Whitney de p = 9,3 × 10⁻⁶⁴ y un δ de Cliff de 0,479, sobre 9 486 pacientes sin evento frente a 431 con evento.
+La @fig-muestreo compara la frecuencia de medición de los pacientes según su desenlace. Para cada uno de los 9 917 pacientes del modelo se calcula la tasa de visitas con analítica por año de seguimiento, contando solo las que caen dentro de la ventana que va de los 18 años al final del seguimiento de cada paciente. La mediana es de 0,256 visitas al año en los pacientes sin evento y de 0,192 en los que lo desarrollan, con un contraste de Mann-Whitney de p = 1,1 × 10⁻²¹ y un δ de Cliff de −0,272.
 
 ![Tasa de visitas con analítica por año de seguimiento en los pacientes sin evento y con evento.](images/fig_sampling.png){#fig-muestreo width="62%"}
 

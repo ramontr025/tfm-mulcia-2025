@@ -94,7 +94,8 @@ def history_table(sequences: dict) -> pd.DataFrame:
     """Una fila por paciente de V1: visitas con analitica, timesteps y Δt.
 
     ``n_lab_visits`` son los timesteps con al menos una analitica observada;
-    ``n_timesteps`` incluye los que solo llevan diagnostico (25,7 % en train).
+    ``n_timesteps`` incluye los que solo llevan diagnostico (25,7 % en train);
+    ``lab_visit_ages`` son las edades de esas visitas, para acotarlas a una ventana.
     """
     rows = []
     for pid, seq in sequences.items():
@@ -108,6 +109,7 @@ def history_table(sequences: dict) -> pd.DataFrame:
                 "pid": pid,
                 "n_timesteps": int(len(times)),
                 "n_lab_visits": int(with_labs.sum()),
+                "lab_visit_ages": times[with_labs],
                 "n_labs_observed": int(per_step.sum()),
                 "first_age": float(times.min()) if len(times) else np.nan,
                 "last_age": float(times.max()) if len(times) else np.nan,

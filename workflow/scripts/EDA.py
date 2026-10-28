@@ -133,6 +133,7 @@ timing_rows, block_2, deltas_days, rates_by_event = blocks.block_timing(
     history,
     samples,
     cohorts["train"],
+    index_age,
     horizon,
     week_days,
     week_tol,
