@@ -92,8 +92,10 @@ sync.sh
 AGENTS.md
 skills-lock.json
 
-#docs
-MemoriaTFM/docs
+# ── Documentación local: fuera de git, se conserva en disco ──
+docs/
+appendix/**/docs/
+MemoriaTFM/docs/
 
 # ── Excepción: etiquetas LOINC versionadas ──
 # resources/ y *.csv están ignorados por tamaño (mapa SNOMED de ~100 MB), pero el
