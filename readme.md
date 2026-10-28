@@ -38,8 +38,6 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 │   ├── referencias.bib
 │   ├── logo.png
 │   ├── _extensions/calote/memoriatfetypst/   Extensión Typst de plantilla
-│   ├── images/                [local] Figuras que consume el render
-│   ├── docs/                  [local] Dossieres de investigación de la redacción
 │   ├── MemoriaTFM.pdf         Memoria compilada
 │   └── MemoriaTFM.html        Memoria compilada (HTML autocontenido)
 ├── appendix/                  Material de fases anteriores y apéndices
@@ -47,28 +45,15 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 │   ├── notebooks/             Notebooks del modelo estático (01_replica_paper_baseline.ipynb, …)
 │   ├── Variables_codif/       Codificaciones SNOMED, LOINC y RxNorm + reveladoras de cáncer
 │   ├── despliegue_Docker/     Despliegue local del modelo (docker-compose + guía)
-│   ├── 2DA FASE/              Repositorio de la segunda fase del proyecto
-│   └── data/                  [local] CSV crudos de Synthea (discovery y holdout)
-├── results/                   [local] Artefactos generados por el pipeline
-│   ├── {discovery,holdout}/cohort.parquet
-│   ├── {train,val,holdout}/cohort.parquet · sequences.pkl
-│   ├── models/{name}.pkl
-│   ├── metrics/{name}.json
-│   ├── comparison.csv · comparison.png · figure_main.*
-│   ├── eda/figures · eda/tables · eda_summary.json
-│   └── lab_stats.json · snomed_to_icd10.json
+│   └── 2DA FASE/              Repositorio de la segunda fase del proyecto
 ├── figs/                      dag.png y rulegraph.png (grafos de Snakemake)
-├── logs/                      [local] Un log por regla (`logs/<regla>/…`)
-├── resources/                 [local] snomed_icd10_map.csv (~100 MB, fuera de git) + loinc_labels.csv (versionado)
+├── resources/
+│   └── loinc_labels.csv       Etiquetas LOINC de las analíticas
 ├── sandbox/                   Notebooks de exploración (transformer, GRU-D)
-├── docs/                      [local] Documentación técnica del pipeline (no versionada)
-├── spec/                      [local] Especificaciones y agentes de trabajo
 ├── _extensions/               Copia de la extensión Typst en la raíz (el render usa la de MemoriaTFM/)
 ├── pixi.toml · pixi.lock      Entorno y tareas reproducibles
 └── readme.md
 ```
-
-`[local]` = no viaja en git (ver `.gitignore`): un clon nuevo **no** lo trae y hay que reconstruirlo.
 
 ### Etapas del pipeline
 
@@ -133,35 +118,15 @@ pixi run snakemake --version
 pixi run python --version
 ```
 
-### 4. Colocar los datos que no viajan en git
+### 4. Colocar los datos de entrada
 
-El pipeline espera los CSV crudos en `data/` y el mapa terminológico en `resources/`. Ni `data/` ni
-`appendix/data/` viajan en git; si conservas el material local de `appendix/data/`, cópialo:
-
-**Windows (PowerShell):**
-
-```powershell
-New-Item -ItemType Directory -Force data | Out-Null
-Copy-Item appendix\data\discovery data\ -Recurse
-Copy-Item appendix\data\holdout   data\ -Recurse
-```
-
-**Linux:**
+El pipeline espera los CSV crudos en `data/` y el mapa terminológico en `resources/`.
 
 ```bash
-mkdir -p data
-cp -r appendix/data/discovery data/
-cp -r appendix/data/holdout   data/
+mkdir -p data/discovery data/holdout
 ```
 
-Si partes de cero, genera o descarga los CSV de Synthea (`patients`, `conditions`, `observations`) y
-colócalos con esa misma estructura de dos pools.
-
-Después hay que descargar el mapa SNOMED CT → CIE-10 desde
-<https://thetuvaproject.com/terminology/snomed-to-icd10-map> y guardarlo como
-`resources/snomed_icd10_map.csv` (~100 MB). El fichero `resources/loinc_labels.csv` sí está versionado.
-
-Árbol esperado:
+Coloca los CSV de Synthea (`patients`, `conditions`, `observations`) en cada pool:
 
 ```
 data/discovery/{patients,conditions,observations}.csv.gz
@@ -169,6 +134,10 @@ data/holdout/{patients,conditions,observations}.csv.gz
 resources/snomed_icd10_map.csv
 resources/loinc_labels.csv
 ```
+
+El mapa SNOMED CT → CIE-10 (~100 MB) se descarga desde
+<https://thetuvaproject.com/terminology/snomed-to-icd10-map> y se guarda como
+`resources/snomed_icd10_map.csv`. El fichero `resources/loinc_labels.csv` ya está en el repositorio.
 
 Las rutas se configuran en `config/config.yaml`; si tus ficheros están en otro sitio, edita ese fichero.
 
@@ -229,8 +198,7 @@ Salidas: `MemoriaTFM/MemoriaTFM.pdf` y `MemoriaTFM/MemoriaTFM.html`.
 Ten en cuenta:
 
 - El documento tiene `execute: eval: false`: **no reejecuta** los chunks de Python, solo maqueta.
-- Las figuras se leen de `MemoriaTFM/images/`, que no está versionada. Sin `pixi run figs` (o sin copiar
-  los PNG/PDF a mano) la compilación termina con avisos de imagen ausente.
+- Las figuras se leen de `MemoriaTFM/images/`, que se genera con `pixi run figs` a partir de `results/`.
 - Nueve figuras de los apéndices (`fig-rnn.png`, `fig-grud.png`, `pr_roc_modelo_cie.png`, …) no las genera
   el pipeline y deben añadirse manualmente si se quieren sin avisos.
 - El render debe lanzarse **desde `MemoriaTFM/`**: ahí viven `referencias.bib`, `logo.png` y la extensión.
@@ -253,23 +221,9 @@ Ten en cuenta:
 | `results/figure_main.{png,pdf}` | Figura principal de la memoria |
 | `results/eda/figures`, `results/eda/tables` | 12 figuras (PNG + PDF) y 7 tablas del EDA |
 | `results/eda/eda_summary.json` | Resumen numérico del EDA |
-| `logs/<regla>/…` | Un log por ejecución de regla |
 | `figs/dag.png`, `figs/rulegraph.png` | Grafos del pipeline |
 
-`results/` está ignorado por git: se reconstruye con `pixi run pipeline`.
-
----
-
-## Documentación local (no versionada)
-
-Estos materiales se conservan en disco pero **no se distribuyen con el repositorio**:
-
-- `docs/` — documentación técnica del pipeline:
-  `bootstrap.md`, `build_cohort.md`, `build_icd10_map.md`, `build_sequences.md`, `competing_risks.md`,
-  `cox_calibration.md`, `eda.md`, `eval.md`, `strats_implementation.md`, `survival_metrics.md`.
-- `MemoriaTFM/docs/` — dossieres de investigación que alimentan los capítulos de la memoria.
-- `appendix/2DA FASE/us-mulcia-2026-ramon/docs/` — documentación de la segunda fase del proyecto.
-- `spec/` — especificaciones y configuración de los agentes de trabajo.
+`results/` se reconstruye con `pixi run pipeline`.
 
 ---
 
