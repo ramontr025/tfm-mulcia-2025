@@ -1,0 +1,27 @@
+population,subset,unit,metric,value,n
+train_12069,all,paciente,lab_visits_per_patient_median,11.0,12069
+train_12069,all,paciente,lab_visits_per_patient_q25,10.0,12069
+train_12069,all,paciente,lab_visits_per_patient_q75,20.0,12069
+train_12069,all,paciente,lab_visits_per_patient_p99,128.0,12069
+train_12069,all,paciente,lab_visits_per_patient_max,474.0,12069
+train_12069,all,paciente,timesteps_per_patient_median,19.0,12069
+train_12069,all,paciente,timesteps_per_patient_q25,15.0,12069
+train_12069,all,paciente,timesteps_per_patient_q75,27.0,12069
+train_12069,all,paciente,timesteps_per_patient_p99,137.0,12069
+train_12069,all,paciente,timesteps_per_patient_max,480.0,12069
+train_12069,all,par de timesteps,delta_days_between_consecutive_timesteps_median,111.00008583068848,306711
+train_12069,all,par de timesteps,delta_days_between_consecutive_timesteps_q25,21.000091552734375,306711
+train_12069,all,par de timesteps,delta_days_between_consecutive_timesteps_q75,370.9988307952881,306711
+train_12069,all,par de timesteps,delta_days_between_consecutive_timesteps_p99,10192.00047440529,306711
+train_12069,all,par de timesteps,delta_days_between_consecutive_timesteps_max,31748.99897709489,306711
+train_12069,all,par de timesteps,pct_delta_near_multiple_of_7,43.1516965482164,306711
+train_12069,all,par de timesteps,pct_delta_over_horizon,7.87777419133973,306711
+train_12069,all,par de timesteps,modal_delta_days,371.0,306711
+train_12069,all,par de timesteps,modal_delta_count,45106.0,306711
+train_12069,all,par de timesteps,annual_mode_count,47266.0,306711
+model_9917,y=0,paciente,lab_visits_per_year_of_followup_median,0.2564057564057564,9486
+model_9917,y=0,paciente,lab_visits_per_year_of_followup_q25,0.18399808580219867,9486
+model_9917,y=0,paciente,lab_visits_per_year_of_followup_q75,0.35705058842143234,9486
+model_9917,y=1,paciente,lab_visits_per_year_of_followup_median,0.19189177356508033,431
+model_9917,y=1,paciente,lab_visits_per_year_of_followup_q25,0.13121296027723928,431
+model_9917,y=1,paciente,lab_visits_per_year_of_followup_q75,0.31326590884725136,431

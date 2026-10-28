@@ -37,6 +37,7 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 │   ├── teoria.qmd             Material de partida de §3.4 (no entra en el render)
 │   ├── referencias.bib
 │   ├── logo.png
+│   ├── images/                Figuras (PNG/PDF/SVG) y tablas del EDA que consume el render
 │   ├── _extensions/calote/memoriatfetypst/   Extensión Typst de plantilla
 │   ├── MemoriaTFM.pdf         Memoria compilada
 │   └── MemoriaTFM.html        Memoria compilada (HTML autocontenido)
@@ -198,7 +199,8 @@ Salidas: `MemoriaTFM/MemoriaTFM.pdf` y `MemoriaTFM/MemoriaTFM.html`.
 Ten en cuenta:
 
 - El documento tiene `execute: eval: false`: **no reejecuta** los chunks de Python, solo maqueta.
-- Las figuras se leen de `MemoriaTFM/images/`, que se genera con `pixi run figs` a partir de `results/`.
+- Las figuras viven en `MemoriaTFM/images/` y están versionadas: la memoria compila en un clon limpio
+  sin ejecutar el pipeline. Si reejecutas el pipeline, `pixi run figs` refresca esa carpeta.
 - Nueve figuras de los apéndices (`fig-rnn.png`, `fig-grud.png`, `pr_roc_modelo_cie.png`, …) no las genera
   el pipeline y deben añadirse manualmente si se quieren sin avisos.
 - El render debe lanzarse **desde `MemoriaTFM/`**: ahí viven `referencias.bib`, `logo.png` y la extensión.

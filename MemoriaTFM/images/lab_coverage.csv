@@ -1,0 +1,167 @@
+lab_code,lab_name_es,group,age_band,scope,unit,metric,value,n
+,,,all,visit,analítica por visita,labs_per_visit_median,8.0,236899
+,,,all,visit,analítica por visita,labs_per_visit_q25,4.0,236899
+,,,all,visit,analítica por visita,labs_per_visit_q75,12.0,236899
+,,,all,visit,analítica por visita,labs_per_visit_min,1.0,236899
+,,,all,visit,analítica por visita,labs_per_visit_max,23.0,236899
+8480-6,Presión arterial sistólica,Signos vitales,all,lab,porcentaje,pct_patients_ever_measured,99.78457204407988,12069
+8480-6,Presión arterial sistólica,Signos vitales,all,lab,porcentaje,pct_visits_with_lab,82.74074605633625,236899
+8480-6,Presión arterial sistólica,Signos vitales,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.0873387099662642,16564
+8480-6,Presión arterial sistólica,Signos vitales,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.16260829411903563,15219
+8480-6,Presión arterial sistólica,Signos vitales,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.3405345983191325,27716
+8480-6,Presión arterial sistólica,Signos vitales,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.4980158882569987,31975
+8480-6,Presión arterial sistólica,Signos vitales,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.3938730472973435,104033
+8462-4,Presión arterial diastólica,Signos vitales,all,lab,porcentaje,pct_patients_ever_measured,99.78457204407988,12069
+8462-4,Presión arterial diastólica,Signos vitales,all,lab,porcentaje,pct_visits_with_lab,82.74074605633625,236899
+8462-4,Presión arterial diastólica,Signos vitales,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.0873387099662642,16564
+8462-4,Presión arterial diastólica,Signos vitales,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.16260829411903563,15219
+8462-4,Presión arterial diastólica,Signos vitales,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.3405345983191325,27716
+8462-4,Presión arterial diastólica,Signos vitales,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.4980158882569987,31975
+8462-4,Presión arterial diastólica,Signos vitales,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.3938730472973435,104033
+9279-1,Frecuencia respiratoria,Signos vitales,all,lab,porcentaje,pct_patients_ever_measured,99.77628635346755,12069
+9279-1,Frecuencia respiratoria,Signos vitales,all,lab,porcentaje,pct_visits_with_lab,67.68285218595267,236899
+9279-1,Frecuencia respiratoria,Signos vitales,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.08181808515736062,15517
+9279-1,Frecuencia respiratoria,Signos vitales,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.15813146415413148,14800
+9279-1,Frecuencia respiratoria,Signos vitales,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.28987706660929763,23593
+9279-1,Frecuencia respiratoria,Signos vitales,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.45426525088048864,29166
+9279-1,Frecuencia respiratoria,Signos vitales,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.028874541491741,76791
+8867-4,Frecuencia cardíaca,Signos vitales,all,lab,porcentaje,pct_patients_ever_measured,99.77628635346755,12069
+8867-4,Frecuencia cardíaca,Signos vitales,all,lab,porcentaje,pct_visits_with_lab,67.68285218595267,236899
+8867-4,Frecuencia cardíaca,Signos vitales,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.08181808515736062,15517
+8867-4,Frecuencia cardíaca,Signos vitales,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.15813146415413148,14800
+8867-4,Frecuencia cardíaca,Signos vitales,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.28987706660929763,23593
+8867-4,Frecuencia cardíaca,Signos vitales,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.45426525088048864,29166
+8867-4,Frecuencia cardíaca,Signos vitales,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.028874541491741,76791
+29463-7,Peso corporal,Antropometría,all,lab,porcentaje,pct_patients_ever_measured,99.78457204407988,12069
+29463-7,Peso corporal,Antropometría,all,lab,porcentaje,pct_visits_with_lab,69.49670534700442,236899
+29463-7,Peso corporal,Antropometría,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.08242973031288385,15633
+29463-7,Peso corporal,Antropometría,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.1611765632949374,15085
+29463-7,Peso corporal,Antropometría,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.30029607870969544,24441
+29463-7,Peso corporal,Antropometría,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.4665384805895274,29954
+29463-7,Peso corporal,Antropometría,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.058726118869866,79019
+8302-2,Talla corporal,Antropometría,all,lab,porcentaje,pct_patients_ever_measured,99.75971497224295,12069
+8302-2,Talla corporal,Antropometría,all,lab,porcentaje,pct_visits_with_lab,66.42282153998117,236899
+8302-2,Talla corporal,Antropometría,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.07984605681110472,15143
+8302-2,Talla corporal,Antropometría,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.1544666606267756,14457
+8302-2,Talla corporal,Antropometría,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.28512216368140386,23206
+8302-2,Talla corporal,Antropometría,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.44605713913345385,28639
+8302-2,Talla corporal,Antropometría,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.0103043950617225,75405
+39156-5,Índice de masa corporal,Antropometría,all,lab,porcentaje,pct_patients_ever_measured,99.75971497224295,12069
+39156-5,Índice de masa corporal,Antropometría,all,lab,porcentaje,pct_visits_with_lab,66.42282153998117,236899
+39156-5,Índice de masa corporal,Antropometría,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.07984605681110472,15143
+39156-5,Índice de masa corporal,Antropometría,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.1544666606267756,14457
+39156-5,Índice de masa corporal,Antropometría,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.28512216368140386,23206
+39156-5,Índice de masa corporal,Antropometría,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.44605713913345385,28639
+39156-5,Índice de masa corporal,Antropometría,70+,lab,observaciones por paciente-año,observations_per_patient_year,1.0103043950617225,75405
+70274-6,Cuestionario GAD-7,Cuestionario,all,lab,porcentaje,pct_patients_ever_measured,97.28229347916148,12069
+70274-6,Cuestionario GAD-7,Cuestionario,all,lab,porcentaje,pct_visits_with_lab,32.10819800843397,236899
+70274-6,Cuestionario GAD-7,Cuestionario,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.039814935942722826,7551
+70274-6,Cuestionario GAD-7,Cuestionario,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.07743099464358047,7247
+70274-6,Cuestionario GAD-7,Cuestionario,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.13962459140202851,11364
+70274-6,Cuestionario GAD-7,Cuestionario,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.21252312104039867,13645
+70274-6,Cuestionario GAD-7,Cuestionario,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.48313196978357736,36059
+718-7,Hemoglobina,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+718-7,Hemoglobina,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.688546595806653,236899
+718-7,Hemoglobina,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.02248850507160811,4265
+718-7,Hemoglobina,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05098671263131861,4772
+718-7,Hemoglobina,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10728633686400149,8732
+718-7,Hemoglobina,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.12813687920845437,8227
+718-7,Hemoglobina,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17988656996351285,13426
+777-3,Plaquetas,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+777-3,Plaquetas,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+777-3,Plaquetas,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+777-3,Plaquetas,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+777-3,Plaquetas,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+777-3,Plaquetas,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+777-3,Plaquetas,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+785-6,Hemoglobina corpuscular media,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+785-6,Hemoglobina corpuscular media,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+785-6,Hemoglobina corpuscular media,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+785-6,Hemoglobina corpuscular media,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+785-6,Hemoglobina corpuscular media,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+785-6,Hemoglobina corpuscular media,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+785-6,Hemoglobina corpuscular media,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+786-4,Concentración de hemoglobina corpuscular media,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+787-2,Volumen corpuscular medio,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+787-2,Volumen corpuscular medio,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+787-2,Volumen corpuscular medio,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+787-2,Volumen corpuscular medio,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+787-2,Volumen corpuscular medio,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+787-2,Volumen corpuscular medio,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+787-2,Volumen corpuscular medio,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+32623-1,Volumen plaquetario medio,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.75971497224295,12069
+32623-1,Volumen plaquetario medio,Hemograma,all,lab,porcentaje,pct_visits_with_lab,13.82867804422982,236899
+32623-1,Volumen plaquetario medio,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.02042156627018481,3873
+32623-1,Volumen plaquetario medio,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.04520636654298178,4231
+32623-1,Volumen plaquetario medio,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.09296019522595457,7566
+32623-1,Volumen plaquetario medio,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.10863677312251965,6975
+32623-1,Volumen plaquetario medio,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.13401053722441944,10002
+32207-3,Amplitud de distribución plaquetaria,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.75971497224295,12069
+32207-3,Amplitud de distribución plaquetaria,Hemograma,all,lab,porcentaje,pct_visits_with_lab,13.82867804422982,236899
+32207-3,Amplitud de distribución plaquetaria,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.02042156627018481,3873
+32207-3,Amplitud de distribución plaquetaria,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.04520636654298178,4231
+32207-3,Amplitud de distribución plaquetaria,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.09296019522595457,7566
+32207-3,Amplitud de distribución plaquetaria,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.10863677312251965,6975
+32207-3,Amplitud de distribución plaquetaria,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.13401053722441944,10002
+4544-3,Hematocrito,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+4544-3,Hematocrito,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.316236033077388,236899
+4544-3,Hematocrito,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.020590295968260182,3905
+4544-3,Hematocrito,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.048657478902561814,4554
+4544-3,Hematocrito,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10514847353208025,8558
+4544-3,Hematocrito,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.12726466999055314,8171
+4544-3,Hematocrito,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17890848865803569,13353
+6690-2,Leucocitos,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+6690-2,Leucocitos,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+6690-2,Leucocitos,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+6690-2,Leucocitos,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+6690-2,Leucocitos,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+6690-2,Leucocitos,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+6690-2,Leucocitos,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+789-8,Hematíes,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.76800066285524,12069
+789-8,Hematíes,Hemograma,all,lab,porcentaje,pct_visits_with_lab,16.646756634683978,236899
+789-8,Hematíes,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.022361957798051585,4241
+789-8,Hematíes,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.05077302146354276,4752
+789-8,Hematíes,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.10707746515915861,8715
+789-8,Hematíes,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.1279655523977952,8216
+789-8,Hematíes,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.17952481386422678,13399
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,all,lab,porcentaje,pct_patients_ever_measured,99.75971497224295,12069
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,all,lab,porcentaje,pct_visits_with_lab,13.82867804422982,236899
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.02042156627018481,3873
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.04520636654298178,4231
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.09296019522595457,7566
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.10863677312251965,6975
+21000-5,Amplitud de distribución eritrocitaria,Hemograma,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.13401053722441944,10002
+2085-9,Colesterol HDL,Lípidos,all,lab,porcentaje,pct_patients_ever_measured,97.97829149059574,12069
+2085-9,Colesterol HDL,Lípidos,all,lab,porcentaje,pct_visits_with_lab,48.80814186636499,236899
+2085-9,Colesterol HDL,Lípidos,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.029084781705742167,5516
+2085-9,Colesterol HDL,Lípidos,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.08195056284203976,7670
+2085-9,Colesterol HDL,Lípidos,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.1934274852553797,15743
+2085-9,Colesterol HDL,Lípidos,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.33798107193672783,21700
+2085-9,Colesterol HDL,Lípidos,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.8708541179739643,64997
+2571-8,Triglicéridos,Lípidos,all,lab,porcentaje,pct_patients_ever_measured,97.97829149059574,12069
+2571-8,Triglicéridos,Lípidos,all,lab,porcentaje,pct_visits_with_lab,48.80814186636499,236899
+2571-8,Triglicéridos,Lípidos,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.029084781705742167,5516
+2571-8,Triglicéridos,Lípidos,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.08195056284203976,7670
+2571-8,Triglicéridos,Lípidos,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.1934274852553797,15743
+2571-8,Triglicéridos,Lípidos,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.33798107193672783,21700
+2571-8,Triglicéridos,Lípidos,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.8708541179739643,64997
+2093-3,Colesterol total,Lípidos,all,lab,porcentaje,pct_patients_ever_measured,97.97829149059574,12069
+2093-3,Colesterol total,Lípidos,all,lab,porcentaje,pct_visits_with_lab,48.80814186636499,236899
+2093-3,Colesterol total,Lípidos,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.029084781705742167,5516
+2093-3,Colesterol total,Lípidos,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.08195056284203976,7670
+2093-3,Colesterol total,Lípidos,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.1934274852553797,15743
+2093-3,Colesterol total,Lípidos,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.33798107193672783,21700
+2093-3,Colesterol total,Lípidos,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.8708541179739643,64997
+18262-6,Colesterol LDL,Lípidos,all,lab,porcentaje,pct_patients_ever_measured,97.97829149059574,12069
+18262-6,Colesterol LDL,Lípidos,all,lab,porcentaje,pct_visits_with_lab,48.80814186636499,236899
+18262-6,Colesterol LDL,Lípidos,18-39,lab,observaciones por paciente-año,observations_per_patient_year,0.029084781705742167,5516
+18262-6,Colesterol LDL,Lípidos,40-49,lab,observaciones por paciente-año,observations_per_patient_year,0.08195056284203976,7670
+18262-6,Colesterol LDL,Lípidos,50-59,lab,observaciones por paciente-año,observations_per_patient_year,0.1934274852553797,15743
+18262-6,Colesterol LDL,Lípidos,60-69,lab,observaciones por paciente-año,observations_per_patient_year,0.33798107193672783,21700
+18262-6,Colesterol LDL,Lípidos,70+,lab,observaciones por paciente-año,observations_per_patient_year,0.8708541179739643,64997

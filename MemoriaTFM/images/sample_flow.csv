@@ -1,0 +1,9 @@
+stage_order,stage,unit,n,pct_of_previous,note,population
+0,pool_crudo,paciente,,,raw no disponible: data/ fuera del arbol; el recuento publicado esta en 2.2,discovery
+1,cohorte_discovery,paciente,15087,,cohort.parquet,discovery
+2,cohorte_train,paciente,12069,79.99602306621595,split de discovery,discovery
+3,cohorte_val,paciente,3018,25.006214267959233,split de discovery,discovery
+4,secuencias_train,paciente,12069,399.90059642147116,results/train/sequences.pkl,discovery
+5,pacientes_con_par_valido,paciente,9917,82.16919380230343,filtro de landmarks,discovery
+6,pares_paciente_landmark,par paciente-landmark,202672,2043.6825652919229,dataset.samples,discovery
+7,cohorte_holdout,paciente,15346,,pool aislado; no pasa por el filtro de landmarks,holdout

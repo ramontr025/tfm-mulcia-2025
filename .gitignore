@@ -27,9 +27,6 @@ results/*.pkl
 # Despliegue Docker
 despliegue_Docker/
 
-# MemoriaTFM
-MemoriaTFM/images/
-
 # Entorno virtual auxiliar 
 venv/
 .venv/
@@ -104,3 +101,10 @@ MemoriaTFM/docs/
 !/resources/
 /resources/*
 !/resources/loinc_labels.csv
+
+# ── Excepción: figuras de la memoria ──
+# MemoriaTFM/images/ se regenera con `pixi run figs` a partir de results/, pero se
+# versiona una copia (PNG/PDF + tablas CSV del EDA) para poder compilar la memoria en
+# un clon limpio sin ejecutar el pipeline. La regla general `*.csv` las excluiría.
+!/MemoriaTFM/images/
+!/MemoriaTFM/images/*.csv
