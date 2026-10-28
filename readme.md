@@ -182,7 +182,8 @@ Notas:
 - Para reconstruir un solo objetivo: `pixi run snakemake -c1 results/train/sequences.pkl`.
 - En **Windows**, `pixi run ok`, `dag` y `rdag` usan `mkdir -p` y fallan en PowerShell. Ejecuta esas tareas
   desde Git Bash/WSL, o lanza por separado `pixi run dryrun`, `pixi run smkfmt` y `pixi run pyfmt`.
-- `pixi run figs` no borra nada y avisa (sin fallar) de los orígenes que aún no existan.
+- `pixi run figs` no borra nada y avisa (sin fallar) de los orígenes que aún no existan. Sobrescribe
+  `MemoriaTFM/images/`, que está versionada: revisa `git diff` antes de commitear.
 
 ---
 
@@ -201,8 +202,8 @@ Ten en cuenta:
 - El documento tiene `execute: eval: false`: **no reejecuta** los chunks de Python, solo maqueta.
 - Las figuras viven en `MemoriaTFM/images/` y están versionadas: la memoria compila en un clon limpio
   sin ejecutar el pipeline. Si reejecutas el pipeline, `pixi run figs` refresca esa carpeta.
-- Nueve figuras de los apéndices (`fig-rnn.png`, `fig-grud.png`, `pr_roc_modelo_cie.png`, …) no las genera
-  el pipeline y deben añadirse manualmente si se quieren sin avisos.
+- `teoria.qmd` (fuera del render) referencia los esquemas de celdas RNN/LSTM/GRU/GRU-D, por lo que Quarto
+  avisa de los cruces `@fig-rnn`, `@fig-lstm`, `@fig-gru` y `@fig-grud` sin resolver. Son avisos, no errores.
 - El render debe lanzarse **desde `MemoriaTFM/`**: ahí viven `referencias.bib`, `logo.png` y la extensión.
 
 ---
