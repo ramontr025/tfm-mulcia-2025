@@ -521,6 +521,14 @@ if estilo == "estilo01" {
 
   set bibliography(full: {bibliografia-completa == "true"} , title: [#referencias-nombre])
 
+  // Tablas al estilo booktabs: sin líneas verticales ni entre filas, cabecera en negrita,
+  // filete fino bajo la cabecera y filetes gruesos arriba y abajo.
+  set table(stroke: none, inset: (x: 6pt, y: 4pt))
+  set table.hline(stroke: 0.05em + black)
+  show table.cell.where(y: 0): set text(weight: "bold")
+  show table: set par(justify: false)
+  show table: it => box(stroke: (top: 0.08em + black, bottom: 0.08em + black), it)
+
 
   
 if portada {
@@ -531,6 +539,8 @@ page(margin: 2cm, header: none, footer: none,
 [
 
 #set text(font: "Libertinus Serif", lang: "es")
+// Portada centrada sin justificar, para que no se abran huecos entre palabras
+#set par(justify: false)
 
 #align(center)[
   // Logo de la universidad
@@ -547,18 +557,18 @@ page(margin: 2cm, header: none, footer: none,
   #v(1cm)
   
   // Grado
-  #text(size: 18pt, weight: "bold")[
+  #text(size: 18pt, weight: "bold", hyphenate: false)[
     #titulacion //Grado en Matemáticas y Estadística
   ]
   #if facultad != none and facultad.trim() != "" {
     linebreak()
-    text(size: 14pt)[
+    text(size: 14pt, hyphenate: false)[
       #facultad
     ]
   }
   #if universidad != none and universidad.trim() != "" {
     linebreak()
-    text(size: 12pt)[
+    text(size: 12pt, hyphenate: false)[
       #universidad
     ]
   }
@@ -583,7 +593,7 @@ page(margin: 2cm, header: none, footer: none,
   #v(0.3cm)
   
   // Título del trabajo
-  #text(size: 26pt, style: "italic", weight: "bold")[    
+  #text(size: 26pt, style: "italic", weight: "bold", hyphenate: false)[    
     #title
   ]
   
@@ -610,7 +620,7 @@ page(margin: 2cm, header: none, footer: none,
 
   // Tutor
   #if tutor-TFG != none {
-    text(size: 14pt)[
+    text(size: 14pt, hyphenate: false)[
       #tutor-TFG //Tutor: Dr. Juan Pérez García
     ]
   }

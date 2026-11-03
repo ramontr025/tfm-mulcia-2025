@@ -1,52 +1,52 @@
-Los datos de este trabajo salen de Synthea, un generador de historias clínicas sintéticas, y de tres vocabularios que se usan para normalizarlos. El entorno computacional completa el cuadro. Antes de describir la metodología conviene fijar de qué materia prima se dispone y qué límites trae consigo.
+Los datos de este trabajo proceden de Synthea, un generador de historias clínicas sintéticas, y se normalizan con tres vocabularios clínicos. El capítulo describe también el entorno computacional. Antes de presentar la metodología conviene precisar de qué datos se dispone y qué limitaciones imponen.
 
 ## Synthea: generación sintética y alcance de las conclusiones {#sec-2-1}
 
 Synthea es un generador de pacientes sintéticos de código abierto, distribuido por MITRE, que simula la historia clínica de una población desde el nacimiento hasta la muerte [@walonoski2018synthea]. Cada módulo de enfermedad es una máquina de estados escrita en JSON, y cada estado puede disparar un diagnóstico, un encuentro, una prescripción o una analítica; la simulación avanza en pasos de siete días [@walonoski2018synthea]. Synthea se alimenta únicamente de estadísticas de salud públicas y de guías clínicas, sin acceso a los registros de pacientes reales, y exporta los resultados a los formatos habituales de historia clínica electrónica [@synthea_github].
 
-El mundo sintético se construye siguiendo el marco PADARSER (*Publicly Available Data Approach to the Realistic Synthetic EHR*), que combina datos del censo y estadísticas sanitarias de Estados Unidos [@walonoski2018synthea]. Los datos de esta memoria no se generaron para ella: proceden de un trabajo previo que usó Synthea para estudiar un sistema de aprendizaje continuo en la predicción del riesgo de cáncer de pulmón [@chen2022simulation]. Ese estudio generó diez poblaciones de unos 15 000 pacientes con semillas distintas y las agrupó en cinco conjuntos acumulativos, de 30 000 a 150 000 pacientes. Para el modelado, aplanó cada historia clínica en una sola fila, conservando el último valor de cada código, y entrenó sus modelos con esa tabla. Ese planteamiento se reproduce en el apéndice A; sin embargo, esta memoria necesita las historias clínicas completas, la secuencia de visitas, diagnósticos y analíticas, porque son la materia prima de los modelos secuenciales. Ni el artículo ni su material suplementario declaran la versión de Synthea utilizada, lo que limita la trazabilidad de los registros.
+El mundo sintético se construye siguiendo el marco PADARSER (*Publicly Available Data Approach to the Realistic Synthetic EHR*), que combina datos del censo y estadísticas sanitarias de Estados Unidos [@walonoski2018synthea]. Los datos de esta memoria no se generaron para ella: proceden de un trabajo previo que usó Synthea para estudiar un sistema de aprendizaje continuo en la predicción del riesgo de cáncer de pulmón [@chen2022simulation]. Ese estudio generó diez poblaciones de unos 15 000 pacientes con semillas distintas y las agrupó en cinco conjuntos acumulativos, de 30 000 a 150 000 pacientes. Para el modelado, aplanó cada historia clínica en una sola fila, conservando el último valor de cada código, y entrenó sus modelos con esa tabla. Ese planteamiento se reproduce en el apéndice A; sin embargo, esta memoria requiere las historias clínicas completas con la secuencia de visitas, diagnósticos y analíticas como base de los modelos secuenciales.
 
-El alcance de las conclusiones viene dado por ese origen. Synthea produce datos realistas, pero no reales: sus propios autores advierten de que no son adecuados para investigación clínica que exija precisión sobre pacientes [@walonoski2018synthea]. El trabajo del que proceden los datos añade que las diferencias entre los pacientes sintéticos y los reales acotan dónde pueden aplicarse los modelos, y señala entre sus limitaciones el número reducido de enfermedades representadas, el sesgo hacia ciertas poblaciones y la ausencia de síntomas [@chen2022simulation]. Para esta memoria la consecuencia es concreta: las prevalencias y las correlaciones que explotan los modelos son las del generador, no las de una población hospitalaria, así que los resultados describen el comportamiento de los modelos sobre estos registros y no trasladan evidencia clínica. El capítulo 6 retoma esta limitación.
+El alcance de las conclusiones viene dado por ese origen. Synthea produce datos realistas, pero no reales: sus propios autores advierten de que no son adecuados para investigación clínica que exija precisión sobre pacientes [@walonoski2018synthea]. El trabajo del que proceden los datos añade que las diferencias entre los pacientes sintéticos y los reales acotan dónde pueden aplicarse los modelos, y señala entre sus características el número reducido de enfermedades representadas, el sesgo hacia ciertas poblaciones y la ausencia de síntomas [@chen2022simulation]. Para esta memoria la consecuencia es concreta: las prevalencias y las correlaciones que explotan los modelos son las del generador, no las de una población hospitalaria, así que los resultados describen el comportamiento de los modelos sobre estos registros y no trasladan evidencia clínica.
 
 ## Fuentes crudas: pacientes, condiciones y observaciones {#sec-2-2}
 
-Cada población del conjunto original incluye trece ficheros del exportador CSV de Synthea [@chen2022dataset], pero nuestro pipeline usa tres por pool: `patients.csv.gz`, `conditions.csv.gz` y `observations.csv.gz`. El fichero `patients.csv.gz` aporta la demografía estática (`Id`, `BIRTHDATE`, `DEATHDATE`, `GENDER`). El fichero `conditions.csv.gz` los diagnósticos en SNOMED CT con su fecha de inicio (`PATIENT`, `START`, `CODE`). Y el fichero `observations.csv.gz` las analíticas y constantes en LOINC con su valor (`PATIENT`, `DATE`, `CODE`, `VALUE`). El resto de dominios de los datos sintéticos originales (encuentros, medicaciones, procedimientos, inmunizaciones, alergias y demás) no se utiliza.
+Cada población del conjunto original incluye trece ficheros del exportador CSV (valores separados por comas, *Comma-Separated Values*) de Synthea [@chen2022dataset], pero el pipeline usa tres por pool: `patients.csv.gz`, `conditions.csv.gz` y `observations.csv.gz`. El fichero `patients.csv.gz` aporta la demografía estática (`Id`, `BIRTHDATE`, `DEATHDATE`, `GENDER`). El fichero `conditions.csv.gz` contiene los diagnósticos codificados en SNOMED CT (*Systematized Nomenclature of Medicine - Clinical Terms*) con su fecha de inicio (`PATIENT`, `START`, `CODE`), y el fichero `observations.csv.gz`, las analíticas y constantes en LOINC (*Logical Observation Identifiers Names and Codes*) con su valor (`PATIENT`, `DATE`, `CODE`, `VALUE`). El resto de dominios de los datos sintéticos originales (encuentros, medicaciones, procedimientos, inmunizaciones, alergias y demás) no se utiliza.
 
-El volumen de los dos pools es comparable, como recoge la @tbl-crudos. Los dos rondan los quince mil quinientos pacientes y los once millones de observaciones.
+El volumen de los dos pools es comparable, como recoge la @tbl-crudos. Ambos contienen en torno a 15 500 pacientes y 11 millones de observaciones.
 
 ::: {#tbl-crudos}
-| Fichero | discovery | holdout |
+| Fichero (número de filas) | discovery | holdout |
 |---|---:|---:|
 | `patients.csv.gz` | 15 354 | 15 591 |
 | `conditions.csv.gz` | 866 514 | 871 547 |
 | `observations.csv.gz` | 11 161 255 | 11 115 019 |
-| Tamaño comprimido del pool (MB) | 135,2 | 134,9 |
+| Tamaño comprimido del pool | 135,2 MB | 134,9 MB |
 
-: "Filas de los ficheros crudos de cada pool (cabecera excluida), y tamaño comprimido del conjunto."
+: "Número de filas de cada fichero crudo por pool, sin contar la cabecera, y tamaño comprimido de los tres ficheros en megabytes (MB)."
 :::
 
 Los dos pools son las dos poblaciones de quince mil pacientes del conjunto de datos publicado por Chen [@chen2022dataset]. Los ficheros crudos no se versionan en el repositorio; el pipeline los espera en `data/{pool}/`.
 
 ## Pools discovery y holdout {#sec-2-3}
 
-Los datos se reparten en dos pools que nunca se mezclan. `discovery` es el pool del que sale todo lo que ajusta los modelos y `holdout` permanece aislado hasta la evaluación final. El reparto de `discovery` en train y validación ocurre antes de construir ninguna secuencia, porque la normalización de las analíticas se calcula con las estadísticas de train y se reutiliza en el resto, y el nodo que fija esas estadísticas queda como un artefacto propio dentro del grafo.
+Los datos se reparten en dos pools que nunca se mezclan: `discovery` es el pool del que proceden todos los datos de ajuste, y `holdout` permanece aislado hasta la evaluación final. El reparto de `discovery` en train y validación ocurre antes de construir ninguna secuencia, porque la normalización de las analíticas se calcula con las estadísticas de train y se reutiliza en el resto, y el nodo que fija esas estadísticas queda como un artefacto propio dentro del grafo.
 
-El reparto es 80/20, estratificado por evento, a nivel de paciente y con semilla fija. La @tbl-pools recoge el resultado en pacientes y eventos. La tasa de evento es prácticamente la misma en train y en validación (3,57 % y 3,58 %), que es lo que se busca al estratificar.
+El reparto es 80/20, estratificado por evento, a nivel de paciente y con semilla fija. La @tbl-pools recoge el resultado en pacientes y eventos. La tasa de evento es prácticamente la misma en train y en validación (3,57 % y 3,58 %), que es el objetivo de la estratificación.
 
 ::: {#tbl-pools}
 | Pool o split | Pacientes | Eventos | Tasa de evento |
 |---|---:|---:|---:|
 | discovery | 15 087 | 539 | 3,57 % |
 | holdout | 15 346 | 618 | 4,03 % |
-| train (80 %) | 12 069 | 431 | 3,57 % |
-| validación (20 %) | 3 018 | 108 | 3,58 % |
+| discovery/train (80 %) | 12 069 | 431 | 3,57 % |
+| discovery/validación (20 %) | 3 018 | 108 | 3,58 % |
 
 : "Pacientes y eventos por pool y por split."
 :::
 
 ## Definición de la cohorte: criterios de entrada, evento y censura {#sec-2-4}
 
-La cohorte de cada pool se construye con un único script y se guarda con tres columnas: `Id`, `duration` y `event`. La duración es el seguimiento en años, desde la fecha índice hasta el evento o hasta la censura, y el evento vale uno cuando hay cáncer de pulmón. El punto de partida es común a todos los pacientes: la fecha índice es el decimoctavo cumpleaños, es decir, la fecha de nacimiento más 18 años, y la duración se mide desde ahí y no desde el nacimiento. Ese origen explica la escala de la columna, de modo que una duración de 49 años son 49 años de seguimiento a partir de los 18. La fecha índice no se guarda como columna, porque se reconstruye a partir de la fecha de nacimiento cuando hace falta.
+La cohorte de cada pool se construye con un único script y se guarda con tres columnas: `Id`, `duration` y `event`. La duración es el seguimiento en años, desde la fecha índice hasta el evento o hasta la censura, y el evento vale uno cuando hay cáncer de pulmón. El punto de partida es común a todos los pacientes: la fecha índice es el decimoctavo cumpleaños, es decir, la fecha de nacimiento más 18 años, y la duración se mide desde ahí y no desde el nacimiento. Ese origen explica la escala de la columna, de modo que una duración de 49 años son 49 años de seguimiento a partir de los 18. Al ser común a todos los pacientes y no depender del desenlace, evita el sesgo temporal de los diseños de casos y controles que sitúan el índice de los casos en la fecha del diagnóstico [@yuan2021temporal]. La fecha índice no se guarda como columna, porque se reconstruye a partir de la fecha de nacimiento cuando hace falta.
 
 Entran en la cohorte los pacientes que cumplen tres condiciones:
 
@@ -54,9 +54,9 @@ Entran en la cohorte los pacientes que cumplen tres condiciones:
 - No tener un diagnóstico de cáncer de pulmón anterior a esa fecha ni simultáneo, para que el evento no sea prevalente y el caso no esté ya diagnosticado al entrar. Es lo que garantiza que el evento sea siempre posterior al decimoctavo cumpleaños.
 - Tener al menos un contacto, un diagnóstico o una analítica, en la fecha índice o después, que es lo que permite seguir al paciente.
 
-Los tres filtros descartan a pocos pacientes: de los 15 354 del fichero de `discovery` entran 15 087, y de los 15 591 de `holdout`, 15 346.
+Los tres criterios excluyen a pocos pacientes: de los 15 354 del fichero de `discovery` entran 15 087, y de los 15 591 de `holdout`, 15 346.
 
-El evento es el primer diagnóstico de cáncer de pulmón, y se identifica con cuatro conceptos de SNOMED CT, que recoge la @tbl-evento. Los cuatro describen neoplasia maligna confirmada.
+El evento es el primer diagnóstico de cáncer de pulmón, y se identifica con cuatro conceptos de SNOMED CT [@snomed_international], que recoge la @tbl-evento. Los cuatro describen neoplasia maligna confirmada.
 
 ::: {#tbl-evento}
 | Código SNOMED CT | Descripción oficial |
@@ -66,22 +66,22 @@ El evento es el primer diagnóstico de cáncer de pulmón, y se identifica con c
 | `424132000` | Non-small cell carcinoma of lung, TNM stage 1 |
 | `67811000119102` | Primary small cell malignant neoplasm of lung, TNM stage 1 |
 
-: "Conceptos SNOMED CT que definen el evento, con la descripción oficial de SNOMED CT International Edition (2025-02-01) [@snomed_international]."
+: "Conceptos SNOMED CT que definen el evento, con la descripción oficial de SNOMED CT International Edition (2025-02-01). La sigla TNM refiere al sistema de estadificación según el tamaño del tumor primario (T), la afectación ganglionar regional (N) y la presencia de metástasis (M)."
 :::
 
 El estudio de Chen y Chen [@chen2022simulation] identifica el evento con tres códigos, dos de ellos comunes con estos y uno distinto: `162573006`, *Suspected lung cancer*, que aquí no se usa porque el evento exige un diagnóstico confirmado y no una sospecha. Tampoco tiene correspondencia en el mapa SNOMED a ICD-10-CM de @sec-2-5, así que no habría podido entrar como variable explicativa.
 
-El final del seguimiento se fija por prioridad: la fecha del diagnóstico si existe, que es entonces la fecha del evento, si no, la fecha de muerte y si no, la del último contacto registrado en `conditions` o en `observations`. Cuando el seguimiento termina sin diagnóstico, se dice que el paciente llega a la censura. La duración es la diferencia en años entre ese final y la fecha índice, en el pool de `discovery` va de 0 a 81 años, con una mediana de 49, que medida desde los 18 años deja a la mitad de la cohorte con seguimiento hasta los 67 años de edad.
+El final del seguimiento se fija por prioridad: la fecha del diagnóstico si existe, que es entonces la fecha del evento; en su defecto, la fecha de muerte, y en último término, la del último contacto registrado en `conditions` o en `observations`. Cuando el seguimiento termina sin diagnóstico, el paciente se considera censurado. La duración es la diferencia en años entre ese final y la fecha índice, en el pool de `discovery` va de 0 a 81 años, con una mediana de 49, que medida desde los 18 años deja a la mitad de la cohorte con seguimiento hasta los 67 años de edad.
 
 ## Vocabularios: LOINC y mapeo de SNOMED a ICD-10-CM {#sec-2-5}
 
 Las variables del modelo se apoyan en tres sistemas de codificación estándar de la informática clínica. SNOMED CT y LOINC son terminologías clínicas con estructura de ontología, es decir, sus conceptos se organizan en jerarquías y se relacionan entre sí. Los diagnósticos de `conditions` llegan codificados en SNOMED CT [@snomed_international] y las analíticas y constantes de `observations`, en LOINC [@loinc]. ICD-10-CM es de otra familia, una clasificación estadística, la de la OMS en su modificación clínica estadounidense, que aquí cumple una función distinta de la codificación, porque agrupa los diagnósticos para convertirlos en variables.
 
-De LOINC se conservan 23 códigos, fijados antes de construir las secuencias: siete signos vitales y medidas antropométricas, quince analíticas de laboratorio. La @tbl-loinc recoge los 23 con su nombre oficial.
+De LOINC se conservan 23 códigos, fijados antes de construir las secuencias: siete signos vitales y medidas antropométricas, la puntuación del cuestionario de ansiedad GAD-7 y quince analíticas de laboratorio. La @tbl-loinc recoge los 23 con su nombre oficial [@loinc].
 
 ::: {#tbl-loinc}
 | Código | Denominación oficial (LOINC) | Grupo |
-|---|---|---|
+|:---------|:-------------------------------------------------------|:-----------------|
 | `8480-6` | Systolic blood pressure | Signos vitales |
 | `8462-4` | Diastolic blood pressure | Signos vitales |
 | `9279-1` | Respiratory rate | Signos vitales |
@@ -106,38 +106,55 @@ De LOINC se conservan 23 códigos, fijados antes de construir las secuencias: si
 | `2093-3` | Cholesterol [Mass/volume] in Serum or Plasma | Lípidos |
 | `18262-6` | Cholesterol in LDL [Mass/volume] in Serum or Plasma by Direct assay | Lípidos |
 
-: "Los 23 códigos LOINC que entran al modelo, con su denominación oficial y el grupo al que pertenecen [@loinc]."
+: "Los 23 códigos LOINC que entran al modelo, con su denominación oficial y el grupo al que pertenecen."
 :::
 
-Los diagnósticos entran al modelo agrupados por categoría, no como conceptos sueltos de SNOMED CT. El mapa que hace esa conversión es el oficial del NLM, la *National Library of Medicine* estadounidense, de SNOMED CT a ICD-10-CM [@nlm_snomedct_to_icd10cm], en la redistribución que publica The Tuva Project [@tuvaproject_snomed_icd10]. El mapa es de relación n:1, es decir, muchos conceptos de SNOMED CT se agrupan en una sola categoría de ICD-10-CM. De hecho, 100 881 conceptos de SNOMED se reducen a 1 497 categorías de tres caracteres.
+Los diagnósticos entran al modelo agrupados por categoría, no como conceptos sueltos de SNOMED CT. El mapa que hace esa conversión es el oficial del NLM, la *National Library of Medicine* estadounidense, de SNOMED CT a ICD-10-CM (*International Classification of Diseases, 10th Revision, Clinical Modification*) [@nlm_snomedct_to_icd10cm], en la redistribución que publica The Tuva Project [@tuvaproject_snomed_icd10]. El mapa es de relación n:1, es decir, muchos conceptos de SNOMED CT se agrupan en una sola categoría de ICD-10-CM. De hecho, 100 881 conceptos de SNOMED se reducen a 1 497 categorías de tres caracteres.
 
 Sobre ese mapa, el pipeline descarta tres cosas antes de usar los códigos como variables. Los conceptos sin correspondencia, las categorías `C33` y `C34`, que agrupan tráquea, bronquios y pulmón y por tanto son reveladoras, y las categorías que empiezan por `O`, `Z`, `V`, `W`, `X` o `Y`, que recogen el embarazo, los factores que condicionan el estado de salud y las causas externas. Tras el filtro quedan 1 312 categorías posibles.
 
-No obstante, el vocabulario que aparece de verdad en los datos es mucho menor: 119 categorías distintas en train, 112 en validación y 120 en holdout, 121 en la unión de los tres. El modelo maneja del orden de 120 categorías y no 1 300; los capítulos 3 y 4 se leen con esa cifra presente. El recuento bajo es una consecuencia del generador: las 1 312 categorías que ofrece el mapa son muchas más de las que produce esta población, porque Synthea representa un número reducido de enfermedades, la limitación que ya se señaló en @sec-2-1. Entre las categorías observadas solo tres son oncológicas: `C18` (colon), `C50` (mama) y `C78`. Esta última no tiene relación con el pulmón: procede de un único concepto (`94260004`, metástasis en el colon), porque `C78` agrupa en una misma categoría los órganos respiratorios y los digestivos.
+No obstante, el vocabulario observado en los datos es mucho menor: 119 categorías distintas en train, 112 en validación y 120 en holdout, 121 en la unión de los tres. El modelo maneja del orden de 120 categorías y no 1 300, y esa cifra debe tenerse presente en los capítulos 3 y 4. El recuento bajo es una consecuencia del generador: las 1 312 categorías que ofrece el mapa son muchas más de las que produce esta población, porque Synthea representa un número reducido de enfermedades, la limitación que ya se señaló en @sec-2-1. Entre las categorías observadas solo tres son oncológicas: `C18` (colon), `C50` (mama) y `C78`. Esta última no tiene relación con el pulmón: procede de un único concepto (`94260004`, metástasis en el colon), porque `C78` agrupa en una misma categoría los órganos respiratorios y los digestivos.
 
 ## Entorno computacional y pipeline reproducible {#sec-2-6}
 
-El pipeline se apoya en dos herramientas. El entorno se reproduce con pixi, que fija Python 3.12 y las versiones de las bibliotecas que intervienen (pandas, PyTorch en su variante de CPU, scikit-survival, lifelines y el resto). La orquestación la lleva Snakemake [@moelder2021snakemake], que resuelve las dependencias entre reglas y las ejecuta en el orden que exigen. El entorno reúne Snakemake, PyTorch y pandas en un mismo espacio, que es lo que permite que cada regla sea un script de Python que corre con la biblioteca ya cargada.
+El pipeline se apoya en dos herramientas. El entorno se reproduce con pixi, que fija en un archivo llamado `pixi.lock` Python 3.12 y las versiones de las bibliotecas que intervienen (pandas, PyTorch en su variante de procesador central o CPU, scikit-survival, lifelines y el resto). La orquestación corre a cargo de Snakemake [@moelder2021snakemake], que resuelve las dependencias entre reglas y las ejecuta en el orden que exigen. El entorno reúne Snakemake, PyTorch y pandas en un mismo espacio, que es lo que permite que cada regla sea un script de Python que corre con la biblioteca ya cargada.
 
-La @fig-rulegraph muestra el grafo de reglas, nueve en total, y las dependencias que las ligan.
+La @fig-rulegraph muestra el grafo de reglas del pipeline, catorce en total, y las dependencias que las ligan. Nueve forman la ejecución principal. Las réplicas del apartado 3.5.4 añaden tres que repiten la partición, la normalización y la construcción de secuencias con su propia semilla (`split_cohort_replica`, `fit_lab_stats_replica` y `build_sequences_replica`), y dos que reúnen sus resultados (`seeds` y `paired`).
 
-![Grafo de reglas del pipeline: dependencias entre las nueve reglas de Snakemake.](images/rulegraph.png){#fig-rulegraph width="45%"}
+![Grafo de reglas del pipeline. Cada nodo es una regla de Snakemake y cada flecha indica que una regla consume un fichero que produce la otra. De `build_cohort` a `build_sequences` se construyen los datos de la ejecución principal, y la rama con el sufijo `_replica` repite la partición, la normalización y las secuencias de cada réplica. `eda` es el análisis exploratorio, y `train`, `eval` y `compare` entrenan, evalúan y comparan los modelos. `seeds` resume la variabilidad entre réplicas, `paired` compara los modelos de forma emparejada y `all` es el objetivo final, que no ejecuta nada por sí mismo.](images/rulegraph.png){#fig-rulegraph width="62%" fig-scap="Grafo de reglas del pipeline."}
 
 ### Las tres etapas del grafo {#sec-2-6-1}
 
 La primera etapa construye los datos. `build_cohort` genera la cohorte de cada pool a partir de los ficheros crudos, `split_cohort` reparte `discovery` en train y validación; `fit_lab_stats` calcula la media y la desviación de cada analítica solo con train y las guarda como artefacto independiente, de manera que validación y holdout se normalizan con esas mismas cifras, `build_icd10_map` reduce el mapa de SNOMED a ICD-10-CM; y `build_sequences` produce las secuencias de cada split.
 
-La segunda etapa es el análisis exploratorio, una sola regla que trabaja sobre las secuencias de train y genera el resumen y las figuras que se comentan en el capítulo 4.
+La segunda etapa es el análisis exploratorio, una sola regla que caracteriza las secuencias de train y lee además las de validación y `holdout` para la tabla de la cohorte por split. Genera el resumen y las figuras que se comentan en el capítulo 4.
 
-La tercera entrena, evalúa y compara. `train` ajusta un modelo por cada entrada del catálogo, `eval` calcula sus métricas en cada landmark y sobre los tres splits, y `compare` reúne los resultados en una tabla y en la figura principal.
+La tercera entrena, evalúa y compara. `train` ajusta un modelo por cada entrada del catálogo, `eval` calcula sus métricas en cada landmark y sobre los tres splits, y `compare` reúne los resultados en una tabla y en la figura principal. Cuando se lanzan las réplicas, `seeds` resume sus métricas por modelo y `paired` compara los modelos de cada réplica sobre los mismos pacientes.
 
 Los artefactos que encadenan las etapas son la cohorte (`cohort.parquet`), las secuencias (`sequences.pkl`), las estadísticas de normalización (`lab_stats.json`), el mapa compacto de diagnósticos (`snomed_to_icd10.json`), los modelos (`models/{nombre}.pkl`), sus métricas (`metrics/{nombre}.json`) y la comparación final (`comparison.csv`).
 
+La @fig-dag despliega el grafo de reglas en los trabajos concretos de la ejecución principal, veinte más el objetivo `all`. Es la forma más directa de comprobar que el diseño respeta la separación entre ajuste y evaluación, porque cada flecha corresponde a un fichero que un trabajo lee de otro.
+
 ### Configuración declarativa: añadir un modelo es editar YAML {#sec-2-6-2}
 
-El catálogo de modelos vive en el fichero de configuración y no en el código. Cada entrada declara un nombre, la arquitectura (`grud`, `lstm`, `cox` o `strats`) y sus hiperparámetros, y las reglas de entrenamiento y evaluación se instancian solas para cada nombre. Añadir un modelo consiste, por tanto, en añadir un bloque a la configuración, sin tocar las reglas. El estudio compara cinco entradas: `grud`, que incorpora los códigos de diagnóstico, `grud_labs`, solo con analíticas, `cox`, `lstm` y `strats`.
+El catálogo de modelos se define en el fichero de configuración y no en el código. Cada entrada declara un nombre, la arquitectura (`grud`, `lstm`, `cox` o `strats`) y sus hiperparámetros, y las reglas de entrenamiento y evaluación se instancian automáticamente para cada nombre. Añadir un modelo consiste, por tanto, en añadir un bloque a la configuración, sin tocar las reglas. El estudio compara cinco entradas: `grud`, que incorpora los códigos de diagnóstico, `grud_labs`, solo con analíticas, `cox`, `lstm` y `strats`.
 
 ### Entorno y ejecución {#sec-2-6-3}
 
-Los comandos de ejecución viven también en el entorno, y el estudio se ha ejecutado por completo en local: Snakemake lanza las reglas sobre una única máquina, con los núcleos disponibles (ocho en el equipo que produjo los resultados) y sin GPU. El entrenamiento corre en CPU, con las secuencias cargadas en memoria, de modo que ampliar la cohorte o añadir arquitecturas encarece el ciclo completo y los tiempos crecen con el número de modelos. A cambio, los cinco modelos se entrenaron y se evaluaron en el mismo entorno fijado y en las mismas condiciones, que es lo que hace comparables sus métricas.
+Los comandos de ejecución se definen también en el entorno, y el estudio se ejecutó completo en un servidor equipado con dos procesadores AMD EPYC 7513 (2 sockets, 32 núcleos por socket, para un total de 64 núcleos de procesamiento y 256 MiB de caché L3) y 1,0 TiB de memoria RAM instalada. Snakemake lanza las reglas sobre esa única máquina, con 60 núcleos asignados y un número fijo de hilos por trabajo (apartado 4.7). El entrenamiento corre en CPU, con las secuencias cargadas en memoria, de modo que ampliar la cohorte o añadir arquitecturas encarece el ciclo completo y los tiempos crecen con el número de modelos. A cambio, los cinco modelos se entrenaron y se evaluaron en el mismo entorno fijado y en las mismas condiciones, que es lo que hace comparables sus métricas.
+
+Por su parte, el desarrollo y la depuración del flujo completo de trabajo se llevaron a cabo de forma local en un ordenador portátil equipado con un procesador Intel Core i7-1165G7 (4 núcleos, 8 hilos a 2,80 GHz) y 16 GB de memoria RAM.
+
+```{=typst}
+// Grafo de trabajos girado 90 grados en una página propia, como lscape en LaTeX.
+#pagebreak(weak: true)
+#align(center + horizon)[#rotate(-90deg, reflow: true)[#block(width: 22.5cm)[
+```
+
+![Grafo de trabajos de la ejecución principal. A diferencia de la @fig-rulegraph, cada nodo es una regla aplicada a un pool, a un split o a un modelo concreto. `build_cohort` se ejecuta una vez por pool y `build_sequences` una vez por split, y las normalizaciones de `fit_lab_stats` se calculan solo con train. `train` y `eval` se ejecutan una vez por cada una de las cinco entradas del catálogo, en paralelo una vez construidas las secuencias. Cada entrenamiento recibe únicamente las secuencias de train y de validación, y las de `holdout` solo llegan a `eval` y al análisis exploratorio, de modo que el conjunto de prueba no interviene en ningún ajuste. Las diez réplicas repiten la estructura desde `split_cohort`, con su propia partición, normalización y secuencias, y añaden 50 trabajos de `train` y 50 de `eval` que no se muestran.](images/dag.png){#fig-dag width="100%" fig-scap="Grafo de trabajos de la ejecución principal."}
+
+```{=typst}
+]]]
+#pagebreak()
+```
 

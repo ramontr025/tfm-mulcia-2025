@@ -1,17 +1,17 @@
 ---
-title: Cribado de cáncer de pulmón
+title: Landmarking y aprendizaje profundo para predecir el riesgo de cáncer de pulmón a cinco años en historias clínicas sintéticas
 author: Ramón Trinidad Acedo
 resumen: |
-  El cribado del cáncer de pulmón consiste en decidir a quién se le hace una prueba antes de que aparezcan síntomas, y esa decisión se apoya cada vez más en modelos de riesgo construidos sobre la historia clínica. Esta memoria compara cinco de ellos sobre una cohorte sintética de Synthea: un modelo de Cox con la última observación arrastrada, una LSTM, dos GRU-D que se distinguen por recibir o no los códigos de diagnóstico, y una adaptación del transformer STraTS. Los cinco comparten cohorte, representación, 26 puntos de corte entre los 45 y los 70 años y un horizonte de predicción de cinco años, y se evalúan en un pool de holdout con C-index IPCW, AUROC a horizonte, Brier IPCW e índice de precisión, todos con intervalos por bootstrap agrupado a nivel de paciente.
-  Los cuatro modelos secuenciales se agrupan entre 0,902 y 0,934 de AUROC y entre 0,769 y 0,804 de C-index IPCW, y todos baten al modelo nulo. Cox se queda en 0,758 de AUROC aunque su C-index sea comparable al de los demás, lo que muestra que ordena a los pacientes sin llegar a calibrar el riesgo a cinco años. La discriminación no separa a los secuenciales entre sí, y donde la evidencia separa es en el índice de precisión, con STraTS y la LSTM por encima de los dos GRU-D. La ablación de los códigos de diagnóstico no cambia las cifras de forma concluyente.
-  El análisis exploratorio explica parte del resultado. El 79 % de las muestras no tiene ninguna analítica anterior al corte, la secuencia se trunca a 200 posiciones, lo que penaliza más al transformer que a los modelos recurrentes. La conclusión es que el protocolo pesa más que la arquitectura, y que estas cifras describen un generador y no una población real.
-palabras-clave: [cribado de cáncer de pulmón, series temporales irregulares, análisis de supervivencia, transformers, GRU-D]  
+  El cribado del cáncer de pulmón exige decidir a quién realizar una prueba antes de que aparezcan síntomas, y los modelos de riesgo construidos sobre la historia clínica pueden apoyar esa decisión. Este trabajo aborda uno de los principales retos del uso de datos clínicos del mundo real con ese fin: definir el instante de predicción y tratar la censura sin introducir sesgos temporales ni de selección, frecuentes cuando la predicción se plantea como una clasificación a corto plazo sobre muestras de casos y controles. Para ello, adapta tres arquitecturas secuenciales al análisis de tiempo hasta el evento mediante una cabeza de riesgo entrenada con la verosimilitud parcial de Cox: una LSTM, GRU-D, en dos variantes con y sin códigos de diagnóstico, y el transformer STraTS, cuya combinación con Cox no se había publicado hasta donde se ha podido comprobar. Como referencia se usa un modelo de Cox con la última observación arrastrada. Los cinco modelos se entrenan sobre una cohorte sintética de Synthea de 15 087 pacientes con un mismo protocolo de landmarking, con 26 puntos de corte fijados por edad entre los 45 y los 70 años y un horizonte de cinco años. Se evalúan en un conjunto de prueba independiente de 15 346 pacientes con AUROC a cinco años, C-index IPCW, Brier IPCW e índice de precisión de la predicción (IPA), con intervalos por bootstrap a nivel de paciente, y el procedimiento completo se repite en diez réplicas con otra partición y otra semilla.
+  STraTS obtiene los valores más altos en las cuatro métricas, con un AUROC de 0,937 [IC 95 %: 0,926; 0,946] y un IPA de 0,124 [0,108; 0,137]. Le siguen la LSTM (0,919 y 0,103), las dos GRU-D (IPA de 0,070 y 0,072) y Cox (0,052). En comparaciones emparejadas sobre once réplicas, STraTS supera a cada uno de los otros modelos en AUROC y en IPA con intervalos que excluyen el cero, por ejemplo a la LSTM en 0,015 [0,001; 0,026] de AUROC y 0,025 [0,008; 0,048] de IPA. Cox alcanza un C-index IPCW de 0,779, comparable al de las GRU-D, pero su AUROC a cinco años se queda en 0,755, porque ordena bien a los pacientes a lo largo del seguimiento completo y peor dentro de la ventana de predicción. Los códigos de diagnóstico mejoran de forma estable el C-index IPCW de GRU-D, pero no su AUROC.
+  STraTS adaptado a Cox es el modelo que mejor predice el riesgo a cinco años entre los evaluados, y su ventaja se mantiene al reentrenarlo. El C-index no basta para evaluar riesgos a horizonte fijo, y la variación entre reentrenamientos, del mismo orden que la del bootstrap, muestra que una comparación basada en un único entrenamiento puede invertir el orden de modelos próximos. Las cifras proceden de un generador sintético y no describen una población real; el protocolo, en cambio, fija el instante de predicción con independencia del desenlace, trata la censura de forma explícita y podría aplicarse sin cambios de fondo a registros clínicos reales.
+palabras-clave: [cribado de cáncer de pulmón, análisis de supervivencia, landmarking, series temporales irregulares, transformers, historia clínica electrónica]  
 abstract: |
-  Lung cancer screening comes down to deciding who gets a test before symptoms appear, and that decision relies increasingly on risk models built from the clinical history. This thesis compares five of them on a synthetic cohort from Synthea: a Cox model with last observation carried forward, an LSTM, two GRU-D models that differ only in whether they receive diagnosis codes, and an adaptation of the STraTS transformer. All five share the cohort, the representation, 26 cut-off points between ages 45 and 70 and a five-year prediction horizon, and are evaluated on a holdout pool with IPCW C-index, time-dependent AUROC, IPCW Brier and the index of prediction accuracy, each with patient-level cluster bootstrap intervals.
-  The four sequential models fall between 0.902 and 0.934 AUROC and between 0.769 and 0.804 IPCW C-index, and all of them beat the null model. Cox stays at 0.758 AUROC although its C-index is comparable, which shows that it ranks patients without calibrating the five-year risk. Discrimination does not separate the sequential models from one another, and the evidence separates them on the index of prediction accuracy, where STraTS and the LSTM sit above both GRU-D models. Ablating the diagnosis codes does not change the figures conclusively.
-  The exploratory analysis accounts for part of the result. Seventy-nine per cent of the samples have no laboratory measurement before the cut-off, sequences are truncated at 200 positions, which penalises the transformer more than the recurrent models. The conclusion is that the protocol weighs more than the architecture, and that these figures describe a generator rather than a real population.
-keywords: [lung cancer screening, irregular time series, survival analysis, transformers, GRU-D]
-agradecimientos: Tus agradecimientos aquí
+  Lung cancer screening requires deciding who should be tested before symptoms appear, and risk models built from the clinical history can support that decision. This work addresses one of the main challenges in using real-world clinical data for that purpose: defining the prediction time and handling censoring without introducing temporal or selection biases, which are common when prediction is framed as short-term classification on case-control samples. To this end, it adapts three sequential architectures to time-to-event analysis through a risk head trained with the Cox partial likelihood: an LSTM, GRU-D, in two variants with and without diagnosis codes, and the STraTS transformer, whose combination with Cox had not, to the best of our knowledge, been published. A Cox model with last observation carried forward serves as the reference. All five models are trained on a synthetic Synthea cohort of 15,087 patients under a common landmarking protocol, with 26 age-based cut-off points between 45 and 70 years and a five-year horizon. They are evaluated on an independent test set of 15,346 patients with five-year AUROC, IPCW C-index, IPCW Brier score and the index of prediction accuracy (IPA), with patient-level bootstrap intervals, and the whole procedure is repeated in ten replicates with another split and another seed.
+  STraTS achieves the highest values in all four metrics, with an AUROC of 0.937 [95% CI: 0.926; 0.946] and an IPA of 0.124 [0.108; 0.137]. It is followed by the LSTM (0.919 and 0.103), the two GRU-D models (IPA of 0.070 and 0.072) and Cox (0.052). In paired comparisons over eleven replicates, STraTS outperforms each of the other models in AUROC and IPA with intervals that exclude zero, for instance the LSTM by 0.015 [0.001; 0.026] in AUROC and 0.025 [0.008; 0.048] in IPA. Cox reaches an IPCW C-index of 0.779, comparable to the GRU-D models, but its five-year AUROC stays at 0.755, because it ranks patients well over the whole follow-up and less well within the prediction window. Diagnosis codes consistently improve the IPCW C-index of GRU-D, but not its AUROC.
+  STraTS adapted to Cox is the model that best predicts five-year risk among those evaluated, and its advantage holds under retraining. The C-index is not enough to assess fixed-horizon risks, and the variation across training runs, of the same order as the bootstrap variation, shows that a comparison based on a single training run can reverse the order of close models. The figures come from a synthetic generator and do not describe a real population; the protocol, by contrast, fixes the prediction time independently of the outcome, handles censoring explicitly and could be applied to real clinical records without substantive changes.
+keywords: [lung cancer screening, survival analysis, landmarking, irregular time series, transformers, electronic health records]
+fig-pos: auto
 lang: es
 date: today
 date-format: full
@@ -19,6 +19,7 @@ bibliography: referencias.bib
 format:
   memoriatfetypst-typst:
     toc: true
+    bibliographystyle: ieee
     #bibliographystyle: apa
     #bibliographystyle: chicago-author-date
     #keep-typ: true
@@ -43,6 +44,7 @@ format:
     bibliografia-completa: false
     header-includes: |
       #let tanh = math.op("tanh")
+      #show figure: set figure(placement: auto)
   html:
     toc: true
     toc-title: "Tabla de Contenidos"
@@ -79,11 +81,5 @@ execute:
 
 {{< appendix >}}
 
-# Modelo predictivo estático sobre corte transversal {#sec-apendice-a}
-{{< include apendice_A_modelo_estatico.qmd >}}
-
-# Resultados y evaluación del modelo estático
-{{< include apendice_B_resultados_estatico.qmd >}}
-
-# Atributos reveladores de cáncer de pulmón
-{{< include apendice_C_reveladoras.qmd >}}
+# Reproducción del estudio estático de referencia y análisis de fugas {#sec-apendice-estatico}
+{{< include apendice_estudio_estatico.qmd >}}
