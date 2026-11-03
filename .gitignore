@@ -47,6 +47,7 @@ venv/
 /data/
 /resources/
 /results/
+/benchmarks/
 /out/
 # agents
 /spec/
@@ -93,6 +94,13 @@ skills-lock.json
 docs/
 appendix/**/docs/
 MemoriaTFM/docs/
+
+# Temporales de compilación LaTeX / Graphviz en MemoriaTFM
+MemoriaTFM/*.aux
+MemoriaTFM/*.log
+MemoriaTFM/*.toc
+MemoriaTFM/*.dot
+
 
 # ── Excepción: etiquetas LOINC versionadas ──
 # resources/ y *.csv están ignorados por tamaño (mapa SNOMED de ~100 MB), pero el

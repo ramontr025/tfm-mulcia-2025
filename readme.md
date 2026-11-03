@@ -5,8 +5,10 @@ Trabajo Fin de Máster del **Máster en Lógica, Computación e Inteligencia Art
 El repositorio contiene un pipeline reproducible (Snakemake + Pixi) que construye una cohorte sintética
 a partir de Synthea, la representa como secuencias clínicas irregulares, entrena cinco modelos de riesgo
 —Cox con última observación arrastrada, LSTM, dos GRU-D (con y sin códigos CIE-10) y una adaptación de
-STraTS— y los evalúa con métricas de supervivencia sobre un pool de holdout. La memoria del TFM se
-compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeline.
+STraTS— y los evalúa con métricas de supervivencia sobre un pool de holdout. Incluye soporte para
+múltiples réplicas de entrenamiento y particionado, así como comparaciones emparejadas rigurosas mediante
+bootstrap de dos niveles. La memoria del TFM se compila aparte con Quarto/Typst a partir de los
+artefactos que produce el pipeline.
 
 > Este README explica cómo reconstruir el entorno, ejecutar el pipeline y compilar la memoria por primera vez.
 
@@ -17,23 +19,27 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 ```
 .
 ├── workflow/                  Pipeline Snakemake
-│   ├── Snakefile              Config, mapas derivados y `rule all`
+│   ├── Snakefile              Config, mapas derivados, réplicas y endpoints (`all`, `seeds`, `paired`)
 │   ├── rules/
 │   │   ├── ingest.smk         build_cohort · split_cohort · fit_lab_stats ·
-│   │   │                      build_icd10_map · build_sequences
-│   │   ├── eda.smk            eda
-│   │   └── models.smk         train · eval · compare
-│   └── scripts/               Un script por regla (Snakemake los inyecta como `script:`)
+│   │   │                      build_icd10_map · build_sequences (+ réplicas de partición)
+│   │   ├── eda.smk            eda (análisis exploratorio y tablas clínicas)
+│   │   └── models.smk         train · eval · compare · seeds · paired
+│   └── scripts/               Módulos ejecutables y utilidades del pipeline
+│       ├── metrics.py         Métricas compartidas (AUROC, IPCW C-index, IPCW Brier, IPA, estimador agrupado)
+│       ├── train.py           Entrenamiento de modelos con control de semilla y concurrencia de hilos
+│       ├── eval.py            Evaluación con estimandos agrupados y exportación de predicciones
+│       ├── compare.py         Comparativa global y figuras maestras
+│       ├── seeds.py           Varianza entre réplicas (runs.csv, summary.csv)
+│       ├── paired.py          Comparación emparejada con bootstrap anidado de dos niveles
 │       ├── eda/               Módulos del análisis exploratorio (io, views, blocks, plots)
 │       └── sync_figs.py       Copia figuras y tablas a MemoriaTFM/images/ (`pixi run figs`)
 ├── config/
-│   └── config.yaml            Cohortes, landmarks 45–70, horizonte 5 años, 5 modelos, bootstrap
+│   └── config.yaml            Cohortes, landmarks 45–70, horizonte 5 años, 5 modelos, bootstrap, réplicas y recursos
 ├── MemoriaTFM/                Memoria del TFM (Quarto → PDF Typst y HTML)
 │   ├── MemoriaTFM.qmd         Documento maestro (incluye los capítulos)
 │   ├── 01_introduccion.qmd … 07_conclusiones.qmd
-│   ├── apendice_A_modelo_estatico.qmd
-│   ├── apendice_B_resultados_estatico.qmd
-│   ├── apendice_C_reveladoras.qmd
+│   ├── apendice_estudio_estatico.qmd   Reproducción del estudio estático de referencia y análisis de fugas
 │   ├── teoria.qmd             Material de partida de §3.4 (no entra en el render)
 │   ├── referencias.bib
 │   ├── logo.png
@@ -47,7 +53,7 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 │   ├── Variables_codif/       Codificaciones SNOMED, LOINC y RxNorm + reveladoras de cáncer
 │   ├── despliegue_Docker/     Despliegue local del modelo (docker-compose + guía)
 │   └── 2DA FASE/              Repositorio de la segunda fase del proyecto
-├── figs/                      dag.png y rulegraph.png (grafos de Snakemake)
+├── figs/                      dag.png y rulegraph.png (grafos de Snakemake actualizados)
 ├── resources/
 │   └── loinc_labels.csv       Etiquetas LOINC de las analíticas
 ├── sandbox/                   Notebooks de exploración (transformer, GRU-D)
@@ -60,9 +66,12 @@ compila aparte con Quarto/Typst a partir de los artefactos que produce el pipeli
 
 | Etapa | Reglas | Qué produce |
 |---|---|---|
-| Ingesta | `build_cohort`, `split_cohort`, `fit_lab_stats`, `build_icd10_map`, `build_sequences` | Cohortes por pool, reparto train/val, normalización de analíticas y secuencias |
+| Ingesta principal | `build_cohort`, `split_cohort`, `fit_lab_stats`, `build_icd10_map`, `build_sequences` | Cohortes por pool, partición train/val de discovery, normalización ajustada en train y secuencias temporales |
+| Réplicas de ingesta | `split_cohort_replica`, `fit_lab_stats_replica`, `build_sequences_replica` | Secuencias bajo `results/replicas/s{seed}/` con particiones y normalizaciones independientes por semilla |
 | EDA (1.5) | `eda` | 12 figuras, 7 tablas y `eda_summary.json` |
-| Modelado | `train`, `eval`, `compare` | Un `.pkl` por modelo, métricas con bootstrap agrupado y comparativa |
+| Modelado principal | `train`, `eval`, `compare` | Un `.pkl` por modelo, métricas `.json` (estimandos agrupados y cluster bootstrap), predicciones `.pkl` y figuras comparativas |
+| Análisis de réplicas | `seeds` | Varianza entre réplicas por modelo (`results/seeds/runs.csv` y `summary.csv`) evaluando estabilidad de entrenamiento y partición |
+| Comparación emparejada | `paired` | Contrastes pareados dentro de cada réplica sobre los mismos pacientes de holdout mediante bootstrap de dos niveles (`results/paired/differences.csv`) |
 
 ---
 
@@ -163,18 +172,23 @@ Todas las tareas están declaradas en `pixi.toml`:
 |---|---|
 | `pixi run dryrun` | `snakemake -n`: resuelve el DAG sin ejecutar nada |
 | `pixi run pipeline` | `snakemake -c4`: ejecución completa (raw → secuencias → modelos → evaluación) |
-| `pixi run ok` | Formatea (`smkfmt`, `pyfmt`), resuelve el DAG y redibuja los grafos |
+| `pixi run ok` | Formatea (`smkfmt`, `pyfmt`), resuelve el DAG y redibuja los grafos (`dag`, `rdag`) |
 | `pixi run figs` | Copia figuras y tablas del pipeline a `MemoriaTFM/images/` |
-| `pixi run dag` / `pixi run rdag` | Regenera `figs/dag.png` y `figs/rulegraph.png` |
+| `pixi run dag` / `pixi run rdag` | Regenera `figs/dag.png` (ejecución principal) y `figs/rulegraph.png` (con `seeds` y `paired`) |
 | `pixi run smkfmt` / `pixi run pyfmt` | Formatea reglas Snakemake / scripts Python |
 | `pixi run cluster` | Ejecuta con el executor de SLURM (requiere descomentar el plugin en `pixi.toml`) |
 
-Primer arranque recomendado:
+### Comandos de análisis empírico y réplicas
 
 ```bash
-pixi run dryrun      # comprueba que el DAG se cablea bien
-pixi run pipeline    # ejecución completa; el entrenamiento de los 5 modelos es la parte lenta
-pixi run figs        # publica las figuras en MemoriaTFM/images/
+# Ejecución completa de la varianza entre réplicas (10 réplicas x 5 modelos = 50 entrenamientos)
+pixi run snakemake -c32 seeds
+
+# Comparación emparejada con bootstrap de dos niveles
+pixi run snakemake -c32 paired
+
+# Ejecución conjunta masiva en máquina de cómputo
+pixi run snakemake -c60 seeds paired
 ```
 
 Notas:
@@ -187,7 +201,7 @@ Notas:
 
 ---
 
-## Compilar la memoria por primera vez
+## Compilar la memoria
 
 ```bash
 cd MemoriaTFM
@@ -196,6 +210,10 @@ quarto render MemoriaTFM.qmd --to html    # HTML autocontenido
 ```
 
 Salidas: `MemoriaTFM/MemoriaTFM.pdf` y `MemoriaTFM/MemoriaTFM.html`.
+
+Estructura de la memoria:
+- **Capítulos principales (`01` a `07`)**: Introducción, Materiales, Métodos, Resultados, Discusión, Limitaciones y Conclusiones.
+- **Apéndice metodológico unificado (`apendice_estudio_estatico.qmd`)**: Reúne en un único documento autocontenido la reproducción del modelo estático previo (Chen y Chen), la auditoría de fuga de información (*data leakage*), la ingeniería ontológica (Snowstorm y ATC nivel 2) y la demostración formal de que la aparente predictibilidad transversal respondía a un artefacto del generador de Synthea (*null experiment*), justificando el viraje al modelado longitudinal y landmarking del cuerpo del trabajo.
 
 Ten en cuenta:
 
@@ -215,18 +233,24 @@ Ten en cuenta:
 | `results/{discovery,holdout}/cohort.parquet` | Cohorte por pool (Id, duración, evento) |
 | `results/{train,val}/cohort.parquet` | Reparto de discovery a nivel de paciente, estratificado por evento |
 | `results/{train,val,holdout}/sequences.pkl` | Secuencias clínicas irregulares que consumen los modelos |
+| `results/replicas/s{seed}/{train,val,holdout}/sequences.pkl` | Secuencias de las réplicas con normalización ajustada en su propio train |
 | `results/lab_stats.json` | Media y desviación por analítica, ajustadas solo en train |
 | `results/snomed_to_icd10.json` | Mapa de códigos SNOMED a capítulos CIE-10 |
-| `results/models/{name}.pkl` | Pesos de `grud`, `grud_labs`, `cox`, `lstm` y `strats` |
-| `results/metrics/{name}.json` | C-index IPCW, AUROC, Brier IPCW e IPA con intervalos bootstrap |
+| `results/models/{name}.pkl` | Pesos de `grud`, `grud_labs`, `cox`, `lstm` y `strats` (y variantes `_s{seed}`) |
+| `results/metrics/{name}.json` | C-index IPCW, AUROC, Brier IPCW e IPA con estimandos agrupados e IC bootstrap |
+| `results/preds/{name}.pkl` | Predicciones de holdout y referencias de entrenamiento para comparaciones rápidas |
 | `results/comparison.{csv,png}` | Tabla y figura comparativa de los cinco modelos |
 | `results/{auroc,brier,cindex_ipcw,ipa}.png` | Curvas y métricas por landmark |
 | `results/figure_main.{png,pdf}` | Figura principal de la memoria |
+| `results/seeds/runs.csv` | Estimandos agrupados individuales de todas las réplicas evaluadas |
+| `results/seeds/summary.csv` | Media, desviación estándar, mínimo y máximo por modelo a través de las réplicas |
+| `results/paired/by_replica.csv` | Comparación emparejada detallada por réplica |
+| `results/paired/differences.csv` | Diferencias entre modelos e IC 95 % obtenidos mediante bootstrap de dos niveles |
 | `results/eda/figures`, `results/eda/tables` | 12 figuras (PNG + PDF) y 7 tablas del EDA |
 | `results/eda/eda_summary.json` | Resumen numérico del EDA |
-| `figs/dag.png`, `figs/rulegraph.png` | Grafos del pipeline |
+| `figs/dag.png`, `figs/rulegraph.png` | Grafos del pipeline (ejecución base y grafo completo de reglas) |
 
-`results/` se reconstruye con `pixi run pipeline`.
+`results/` se reconstruye con `pixi run pipeline` (o `seeds` / `paired` para los análisis de robustez).
 
 ---
 
