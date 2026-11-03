@@ -21,7 +21,7 @@ Una mediana de seguimiento de 49 años medida desde los 18 sitúa el final del s
 
 La @fig-cohorte recoge la incidencia acumulada de diagnóstico por split, con su intervalo al 95 %, sobre la ventana de landmarks. La curva crece con la edad, `holdout` queda por encima de train y validación en toda la ventana, y el intervalo se ensancha en los cortes finales.
 
-![Incidencia acumulada de diagnóstico por split, con intervalo de confianza al 95 %.](images/fig_cohort.png){#fig-cohorte width="85%"}
+![Incidencia acumulada de diagnóstico por split, con intervalo de confianza al 95 %.](images/fig_cohort.png){#fig-cohorte width="75%"}
 
 
 ## Caracterización de las secuencias {#sec-4-2}
@@ -34,21 +34,23 @@ La @fig-cobertura muestra tres magnitudes que varían con la edad del corte: el 
 
 El filtro de landmarks, descrito en el capítulo 3, descarta las muestras cuyo seguimiento ha terminado antes del corte. Una muestra sin ninguna observación previa no se descarta, sino que entra con un único paso vacío en la edad del corte. De los 12 069 pacientes de train, 9 917 tienen al menos un par válido, lo que produce 202 672 filas sobre los 26 puntos de corte. De ellas, 160 233 (el 79,06 %) no tienen ninguna analítica anterior al corte, y la mediana de analíticas por muestra es cero en los 26 cortes. La mediana de códigos de diagnóstico es 3 y el percentil 90 es 8.
 
-![Muestras por corte, proporción sin analítica previa y magnitudes disponibles cuando hay datos.](images/fig_sample_coverage.png){#fig-cobertura width="85%"}
-
 La cobertura depende de la edad. La proporción de muestras sin analítica baja del 85,44 % en el corte de 45 años al 67,99 % en el de 70, y la mediana de instantes con registro sube de 2 a 5. Cuando el paciente tiene analíticas, su número es elevado: la mediana condicional es de 45 mediciones en el corte de 45 años y de 64 en el de 70. La muestra efectiva es, por tanto, una mezcla de pacientes con mucha historia y de pacientes sin ninguna, y esa mezcla cambia con el corte.
 
 ### Muestreo informativo {#sec-4-2-2}
 
 La @fig-muestreo compara la frecuencia de medición de los pacientes según su desenlace. Para cada uno de los 9 917 pacientes del modelo se calcula la tasa de visitas con analítica por año de seguimiento, contando solo las que caen dentro de la ventana que va de los 18 años al final del seguimiento de cada paciente. La mediana es de 0,256 visitas al año en los pacientes sin evento y de 0,192 en los que lo desarrollan, con un contraste de Mann-Whitney de p = 1,1 × 10⁻²¹ y un δ de Cliff de −0,272.
 
-![Tasa de visitas con analítica por año de seguimiento en los pacientes sin evento y con evento.](images/fig_sampling.png){#fig-muestreo width="62%"}
+::: {#fig-eda-cobertura layout-ncol=2}
+![Muestras por corte, proporción sin analítica previa y magnitudes disponibles cuando hay datos.](images/fig_sample_coverage.png){#fig-cobertura}
+
+![Tasa de visitas con analítica por año de seguimiento en los pacientes sin evento y con evento.](images/fig_sampling.png){#fig-muestreo}
+
+Cobertura longitudinal por punto de corte de landmark (a) y contraste de la tasa de visitas con analítica según el desenlace clínico (b).
+:::
 
 ### Densidad de observación {#sec-4-2-3}
 
 La @fig-densidad reúne la carga de cada visita, la presencia de cada analítica y la intensidad por edad. En una visita se registran 8 analíticas de mediana y 9,05 de media, con un rango de 1 a 23. La presencia se mide en dos unidades que no son intercambiables. Entre el 97,3 % y el 99,8 % de los pacientes tiene alguna vez cada analítica, pero solo entre el 13,8 % y el 82,7 % de las visitas la incluye. La primera cifra indica que casi todos los pacientes tienen cada analítica en algún momento, y la segunda, que en cada visita solo se mide una fracción de ellas. La intensidad por banda de edad crece con los años.
-
-![Analíticas por visita, presencia de cada analítica en pacientes y en visitas, e intensidad por banda de edad.](images/fig_observation_density.png){#fig-densidad width="85%"}
 
 ### Magnitudes y normalización {#sec-4-2-4}
 
@@ -56,14 +58,20 @@ La @fig-magnitudes representa, para cada analítica, la distribución de los val
 
 Sobre 2 143 703 valores observados, 19 de las 23 analíticas cumplen la tolerancia de media a ±0,01 de cero y desviación a ±0,01 de uno. Cuatro quedan fuera de ella, todas por menos de tres centésimas. Son la frecuencia respiratoria (0,972), la frecuencia cardíaca (0,986), la concentración de hemoglobina corpuscular media (media 0,017 y desviación 0,987) y los leucocitos (media −0,012). Se marcan y no se corrigen, porque el z-score se ajustó en train sobre las observaciones antes del filtrado por edad y por código, y ese orden explica la diferencia.
 
-![Distribución de los valores estandarizados observados por analítica, con los límites de ±5.](images/fig_value_scale.png){#fig-magnitudes width="85%"}
+::: {#fig-eda-mediciones layout-ncol=2}
+![Analíticas por visita, presencia de cada analítica en pacientes y en visitas, e intensidad por banda de edad.](images/fig_observation_density.png){#fig-densidad}
+
+![Distribución de los valores estandarizados observados por analítica, con los límites de ±5.](images/fig_value_scale.png){#fig-magnitudes}
+
+Densidad de observación longitudinal de analíticas clínicas (a) y control de distribución estandarizada tras normalización (b).
+:::
 
 
 ## Discriminación por landmark {#sec-4-3}
 
 La @fig-cindex muestra el C-index IPCW de Uno en `holdout` a lo largo de los 26 puntos de corte, de 45 a 70 años, con una banda de intervalo de confianza al 95 % obtenida por bootstrap de paciente en cada landmark. Los cinco modelos mejoran con la edad y ninguno lo hace de forma monótona. El retroceso del 65 es el único que comparten los cinco, y el del 50 aparece en tres de ellos.
 
-![C-index IPCW (Uno) por edad de landmark en holdout, con intervalo de confianza al 95 % por bootstrap de paciente.](images/cindex_ipcw.png){#fig-cindex width="90%"}
+![C-index IPCW (Uno) por edad de landmark en holdout, con intervalo de confianza al 95 % por bootstrap de paciente.](images/cindex_ipcw.png){#fig-cindex width="75%"}
 
 En el landmark de 45 años el C-index IPCW va de 0,728 del peor modelo a 0,750 del mejor. En el de 70 años, de 0,863 a 0,909. La @tbl-cindex-anclas recoge los dos valores extremos de cada modelo.
 
@@ -88,9 +96,13 @@ El índice de precisión (IPA) y el Brier IPCW, definidos en el capítulo 3, mid
 
 La @fig-brier muestra el error por landmark y la @fig-ipa el IPA por landmark. La segunda muestra dos resultados: el IPA es positivo en la mayor parte de la rejilla para los cinco modelos, y `cox` es el único que cruza el cero, con valores negativos en los landmarks 48, 49, 53, 55 y 58 y un mínimo de −0,024 en el 58. Los otros cuatro se mantienen por encima de cero en toda la rejilla.
 
-![Brier IPCW a cinco años por landmark en holdout.](images/brier.png){#fig-brier width="90%"}
+::: {#fig-utilidad layout-ncol=2}
+![Brier IPCW a cinco años por landmark en holdout.](images/brier.png){#fig-brier}
 
-![Índice de precisión (IPA) a cinco años por landmark en holdout, con la línea del modelo nulo en cero.](images/ipa.png){#fig-ipa width="90%"}
+![Índice de precisión (IPA) a cinco años por landmark en holdout, con la línea del modelo nulo en cero.](images/ipa.png){#fig-ipa}
+
+Calibración mediante Brier IPCW (a) y utilidad clínica frente al modelo nulo mediante IPA (b) a lo largo de la rejilla de landmarks.
+:::
 
 
 ## Resumen agregado por modelo {#sec-4-5}
