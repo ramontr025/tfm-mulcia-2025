@@ -29,7 +29,7 @@ resources:
 # a fixed seed. holdout is not split further, it is already its own pool.
 splits:
   train_frac: 0.80   # val_frac = 1 - train_frac
-  seed: 0
+  seed: 0             # tambien semilla de entrenamiento de la ejecucion principal
 
 # ── cohort construction (Stage 1) ──
 cohort:
@@ -83,6 +83,43 @@ bootstrap:
   n_boot_pooled: 100   # replicas del cluster bootstrap agrupado (mas caro por replica)
   seed: 0
   landmarks: "all"     # "all" = landmark_min..landmark_max de cohort
+
+
+
+# ── replicas (reglas seeds y paired) ──
+# Cada semilla s es una replica completa: reparte discovery en train/val con semilla
+# s, ajusta la normalizacion con ese train, construye sus secuencias (holdout
+# incluido, con esa normalizacion) y entrena cada modelo de `models:` con semilla s
+# como {name}_s{s}. La ejecucion principal es la replica splits.seed (las tablas de
+# la memoria): con N semillas salen N + 1 ejecuciones por modelo.
+replica_seeds: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+
+# Comparacion emparejada entre modelos (regla paired): bootstrap de dos niveles,
+# replica al azar y cluster bootstrap de pacientes de holdout en cada iteracion.
+paired:
+  n_boot: 200
+  seed: 0
+  threads: 32
+  mem_mb: 64000
+
+
+
+# ── recursos por trabajo (threads + mem_mb de cada regla) ──
+# Pensado para una maquina de 64 nucleos y 1 TB sin GPU (pytorch-cpu). train y eval
+# limitan torch y BLAS a sus `threads`, asi que los trabajos en paralelo no se pisan:
+# con -c 60, caben ~15 entrenamientos o ~60 evaluaciones a la vez. Un modelo puede
+# pedir otro numero de hilos de entrenamiento con `threads:` y adelantarse en la cola
+# con `priority:` en su entrada de `models:`. Los benchmarks (benchmarks/) dan un pico
+# de 1,3 a 2,9 GB por trabajo y una carga media de ~1 en eval: su bootstrap es un
+# bucle de un solo hilo. strats con 12 hilos solo baja de 98 a 83 min y deja sitio a 5
+# entrenamientos a la vez; con 4 caben las 11 replicas en una sola tanda.
+compute:
+  train_threads: 4
+  eval_threads: 1
+  train_mem_mb: 4000
+  eval_mem_mb: 4000
+  ingest_threads: 1
+  ingest_mem_mb: 4000
 
 
 
@@ -168,6 +205,7 @@ models:
   - name: strats
     arch: strats
     icd: 1
+    priority: 10  # ~100 min de entrenamiento frente a 5-13 del resto: que arranque primero
     hidden_dim: 32
     num_heads: 4
     num_layers: 2

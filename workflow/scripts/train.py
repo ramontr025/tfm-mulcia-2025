@@ -1,11 +1,13 @@
 import copy
 import pickle
+import random
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
 import torch
+from threadpoolctl import threadpool_limits
 from torch.utils.data import DataLoader, WeightedRandomSampler
 
 # Permitir importar módulos locales desde workflow/scripts
@@ -51,8 +53,23 @@ landmark_min = int(snakemake.params.landmark_min)
 landmark_max = int(snakemake.params.landmark_max)
 landmark_ages = list(range(landmark_min, landmark_max + 1))
 
+# Semilla de la inicializacion y del muestreador ponderado. None deja el
+# comportamiento original (sin fijar); las replicas {name}_s{seed} la fijan.
+seed = snakemake.params.seed
+if seed is not None:
+    random.seed(int(seed))
+    np.random.seed(int(seed))
+    torch.manual_seed(int(seed))
+    print(f"Seed: {int(seed)}")
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Device: {device}")
+
+# Hilos de este trabajo: los que reserva Snakemake (threads:). Sin limite, torch y
+# BLAS abren uno por nucleo y los trabajos en paralelo se pisan la CPU.
+torch.set_num_threads(snakemake.threads)
+threadpool_limits(snakemake.threads)
+print(f"Threads: {snakemake.threads}")
 
 # 2. Cargar el pickle de secuencias de entrada (train, val)
 sequences_train, lab_codes, cohort_train = load_sequences(snakemake.input.train)

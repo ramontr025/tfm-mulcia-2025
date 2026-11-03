@@ -55,6 +55,11 @@ rule build_cohort:
         observations=lambda wc: config["raw"][wc.pool]["observations"],
     output:
         "results/{pool}/cohort.parquet",
+    benchmark:
+        "benchmarks/build_cohort/{pool}.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/build_cohort/{pool}.log",
     params:
@@ -72,6 +77,11 @@ rule split_cohort:
     output:
         train="results/train/cohort.parquet",
         val="results/val/cohort.parquet",
+    benchmark:
+        "benchmarks/split_cohort.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/split_cohort.log",
     params:
@@ -90,6 +100,11 @@ rule fit_lab_stats:
         observations=config["raw"]["discovery"]["observations"],
     output:
         "results/lab_stats.json",
+    benchmark:
+        "benchmarks/fit_lab_stats.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/fit_lab_stats.log",
     params:
@@ -106,6 +121,11 @@ rule build_icd10_map:
         snomed_map=config["resources"]["snomed_icd10_map"],
     output:
         "results/snomed_to_icd10.json",
+    benchmark:
+        "benchmarks/build_icd10_map.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/build_icd10_map.log",
     script:
@@ -133,6 +153,11 @@ rule build_sequences:
         conditions=lambda wc: raw_pool_for(wc)["conditions"],
     output:
         "results/{split}/sequences.pkl",
+    benchmark:
+        "benchmarks/build_sequences/{split}.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/build_sequences/{split}.log",
     params:
@@ -141,3 +166,54 @@ rule build_sequences:
         outcome_icd_prefixes=config["features"]["outcome_icd_prefixes"],
     script:
         "../scripts/build_sequences.py"
+
+
+# ── Replicas ──
+# Cada replica s (replica_seeds en la config) repite los pasos 2, 3 y 5 con su propia
+# particion de discovery: reparte con semilla s, ajusta la normalizacion con SU train
+# y construye sus secuencias bajo results/replicas/s{seed}/. holdout entra con la
+# misma cohorte de siempre, pero normalizado con las estadisticas de la replica. Las
+# reglas heredan script, recursos y parametros de las principales.
+use rule split_cohort as split_cohort_replica with:
+    output:
+        train="results/replicas/s{seed}/train/cohort.parquet",
+        val="results/replicas/s{seed}/val/cohort.parquet",
+    benchmark:
+        "benchmarks/split_cohort/s{seed}.tsv"
+    log:
+        "logs/split_cohort/s{seed}.log",
+    params:
+        train_frac=config["splits"]["train_frac"],
+        seed=lambda wc: int(wc.seed),
+
+
+use rule fit_lab_stats as fit_lab_stats_replica with:
+    input:
+        train_cohort="results/replicas/s{seed}/train/cohort.parquet",
+        observations=config["raw"]["discovery"]["observations"],
+    output:
+        "results/replicas/s{seed}/lab_stats.json",
+    benchmark:
+        "benchmarks/fit_lab_stats/s{seed}.tsv"
+    log:
+        "logs/fit_lab_stats/s{seed}.log",
+
+
+use rule build_sequences as build_sequences_replica with:
+    input:
+        cohort=lambda wc: (
+            "results/holdout/cohort.parquet"
+            if wc.split == "holdout"
+            else f"results/replicas/s{wc.seed}/{wc.split}/cohort.parquet"
+        ),
+        lab_stats="results/replicas/s{seed}/lab_stats.json",
+        snomed_map="results/snomed_to_icd10.json",
+        patients=lambda wc: raw_pool_for(wc)["patients"],
+        observations=lambda wc: raw_pool_for(wc)["observations"],
+        conditions=lambda wc: raw_pool_for(wc)["conditions"],
+    output:
+        "results/replicas/s{seed}/{split}/sequences.pkl",
+    benchmark:
+        "benchmarks/build_sequences/s{seed}_{split}.tsv"
+    log:
+        "logs/build_sequences/s{seed}_{split}.log",

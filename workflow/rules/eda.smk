@@ -44,6 +44,11 @@ rule eda:
         ],
     output:
         directory("results/eda"),
+    benchmark:
+        "benchmarks/eda.tsv"
+    threads: config["compute"]["ingest_threads"]
+    resources:
+        mem_mb=config["compute"]["ingest_mem_mb"],
     log:
         "logs/eda.log",
     params:

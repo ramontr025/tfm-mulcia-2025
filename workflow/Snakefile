@@ -23,12 +23,39 @@ MODELS = {
 }  # nombre -> fila del modelo (issues 2 a 5)
 # `models:` no existe en la config todavia (llega en el issue 2), de ahi el
 # `.get(..., [])`: sin esto, cargar el Snakefile ya revienta antes del issue 1.
+BASE_MODELS = list(MODELS)  # los de la config; los que entran en compare y en all
+# La ejecucion principal fija su semilla de entrenamiento con la misma semilla de la
+# particion (splits.seed): es la replica 0 y sus numeros son los de las tablas.
+MAIN_SEED = config["splits"]["seed"]
+for m in MODELS.values():
+    m["seed"] = MAIN_SEED
+# Replicas: cada semilla s da una particion propia de discovery y una semilla de
+# entrenamiento propia, y la misma fila de `models:` se entrena como {name}_s{s}
+# sobre las secuencias de su replica. Solo las piden las reglas `seeds` y `paired`.
+SEEDS = config.get("replica_seeds", [])
+assert MAIN_SEED not in SEEDS, "replica_seeds no puede repetir splits.seed"
+MODELS.update(
+    {
+        f"{n}_s{s}": {**m, "name": f"{n}_s{s}", "seed": s, "replica": s}
+        for n, m in list(MODELS.items())
+        for s in SEEDS
+    }
+)
+
+
+def sequences_for(name, split):
+    """Secuencias de un split para un modelo: las principales o las de su replica."""
+    rep = MODELS[name].get("replica")
+    if rep is None:
+        return f"results/{split}/sequences.pkl"
+    return f"results/replicas/s{rep}/{split}/sequences.pkl"
 
 
 wildcard_constraints:
     pool="discovery|holdout",  # build_cohort corre por pool; el reparto train/val es aparte
     split="|".join(SPLITS),
     name="|".join(MODELS),
+    seed=r"\d+",
 
 
 # ── Endpoint por defecto ──
@@ -39,7 +66,7 @@ rule all:
     input:
         expand("results/{split}/sequences.pkl", split=SPLITS),
         "results/eda",
-        expand("results/metrics/{name}.json", name=list(MODELS)),
+        expand("results/metrics/{name}.json", name=BASE_MODELS),
         "results/comparison.csv",
         "results/comparison.png",
 
