@@ -114,4 +114,4 @@ El capítulo 4 presenta los resultados: las características de la cohorte, el a
 
 El capítulo 5 discute qué diferencias sostiene la evidencia, el comportamiento particular de Cox, la comparación con el trabajo previo sobre STraTS en cáncer de pulmón, el aumento pronunciado observado en torno al landmark 60 y el papel de los códigos de diagnóstico.
 
-El capítulo 6 recoge las limitaciones y el trabajo futuro, y el capítulo 7 cierra con las conclusiones, objetivo por objetivo. Los apéndices recogen el modelo predictivo estático que precedió a este trabajo y sus resultados, y la tabla de atributos reveladores.
+El capítulo 6 recoge las limitaciones y el trabajo futuro, y el capítulo 7 cierra con las conclusiones, objetivo por objetivo. El apéndice A recoge la reproducción del estudio estático que precedió a este trabajo y el análisis de fugas de información que llevó a abandonarlo.

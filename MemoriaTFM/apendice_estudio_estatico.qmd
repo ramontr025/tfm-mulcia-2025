@@ -1,4 +1,4 @@
-Este apéndice describe la fase inicial del proyecto, concebida como la reproducción y evaluación crítica del estudio de referencia de Chen y Chen [@chen2022simulation]. En dicho trabajo se aborda la predicción del cáncer de pulmón como un problema de clasificación estático y transversal sobre datos sintéticos generados con *Synthea*. Aunque la memoria principal ya expone en detalle la procedencia general de la cohorte y su estructura longitudinal, resulta imprescindible documentar este experimento previo: su análisis demostró que el planteamiento estático sobre estos datos constituía un experimento vacío o nulo (*null experiment*), pues los patrones aprendidos por los clasificadores respondían a una severa fuga de información (*data leakage*) y a la forma en que el generador sintetizó las muestras, motivando el cambio metodológico radical hacia el modelado temporal y de supervivencia que articula esta memoria.
+Este apéndice describe la fase inicial del proyecto, concebida como la reproducción y evaluación crítica del estudio de referencia de Chen y Chen [@chen2022simulation]. En dicho trabajo se aborda la predicción del cáncer de pulmón como un problema de clasificación estático y transversal sobre datos sintéticos generados con *Synthea*. Aunque la memoria principal ya expone la procedencia de la cohorte y su estructura longitudinal, conviene documentar este experimento previo. Su análisis mostró que, sobre estos datos, el planteamiento estático no permitía extraer conclusiones sobre el riesgo (un experimento nulo, *null experiment*): los patrones que aprendían los clasificadores respondían a una fuga de información (*data leakage*) y a la forma en que se construyó la cohorte original a partir de las historias de Synthea. Ese resultado motivó el cambio hacia el modelado temporal y de supervivencia que articula esta memoria.
 
 ## Planteamiento inicial y reproducción del modelo estático
 
@@ -40,7 +40,7 @@ regresor = Pipeline([
 ])
 ```
 
-Al evaluar este modelo de regresión logística sobre el conjunto de prueba, se obtuvieron unas métricas de rendimiento excepcionalmente altas (@tbl-clasification-report), acompañadas de curvas ROC y de precisión-exhaustividad prácticamente perfectas (@fig-evaluacion).
+Al evaluar este modelo de regresión logística sobre el conjunto de prueba, se obtuvieron métricas casi perfectas (@tbl-clasification-report), acompañadas de curvas ROC y de precisión-exhaustividad prácticamente perfectas (@fig-evaluacion).
 
 ::: {#tbl-clasification-report}
 | Exactitud | Sensibilidad |   F1 |  AUC  |
@@ -53,7 +53,7 @@ Al evaluar este modelo de regresión logística sobre el conjunto de prueba, se 
 ::: {#fig-evaluacion layout-ncol="2"}
 ![Curvas ROC en los conjuntos de entrenamiento, validación y test.](images/roc_logistico.png){#fig-roc}
 
-![Curvas PR para el modelo logístico en los tres conjuntos.](images/PR_logistico.png){#fig-nueva-grafica}
+![Curvas PR para el modelo logístico en los tres conjuntos.](images/PR_logistico.png){#fig-pr-logistico}
 
 Curvas de rendimiento diagnóstico del modelo de regresión logística sobre el corte estático.
 :::
@@ -64,9 +64,9 @@ Para examinar la estabilidad de estos resultados y determinar cuántas variables
 
 ## Detección de fuga de información (*Data Leakage*)
 
-Alcanzar un área bajo la curva ROC de 0,986 y un F1 de 0,97 en un problema de cribado general precoz de cáncer de pulmón resulta inverosímil desde el punto de vista clínico. Estos valores suscitaron la hipótesis inmediata de que el conjunto de datos contenía una grave fuga de información (*data leakage*): variables predictoras que no preceden a la enfermedad como factores de riesgo, sino que son consecuencia directa de que el paciente ya ha sido diagnosticado o se encuentra bajo tratamiento oncológico.
+Alcanzar un área bajo la curva ROC de 0,986 y un F1 de 0,97 en un problema de cribado general precoz de cáncer de pulmón no es plausible desde el punto de vista clínico, y apunta a una fuga de información (*data leakage*): variables predictoras que no preceden a la enfermedad como factores de riesgo, sino que son consecuencia directa de que el paciente ya ha sido diagnosticado o se encuentra bajo tratamiento oncológico.
 
-La inspección detallada de las 765 variables confirmó esta sospecha. Se identificaron múltiples columnas que delataban explícitamente el estado de cáncer avanzado (@tbl-reveladoras-cancer), tales como `C-88040-1` (*Response to cancer treatment*), `C-59557-9` (*Treatment status Cancer*), `C-21908-9` (*Stage group.clinical Cancer*), procedimientos de quimioterapia y radioterapia, citostáticos específicos (carboplatino, paclitaxel, docetaxel) o intervenciones quirúrgicas invasivas como trasplantes pulmonares. La inclusión de estas variables explicaba la aparente omnisciencia del modelo.
+La inspección detallada de las 765 variables confirmó esta sospecha. Se identificaron múltiples columnas que delataban explícitamente el estado de cáncer avanzado (@tbl-reveladoras-cancer), tales como `C-88040-1` (*Response to cancer treatment*), `C-59557-9` (*Treatment status Cancer*), `C-21908-9` (*Stage group.clinical Cancer*), procedimientos de quimioterapia y radioterapia, citostáticos específicos (carboplatino, paclitaxel, docetaxel) o intervenciones quirúrgicas invasivas como trasplantes pulmonares. La inclusión de estas variables explicaba buena parte del rendimiento del modelo. A ellas se sumaba el tabaquismo, cuya asociación con el desenlace era prácticamente total en esta cohorte y bastaba por sí sola para separar casos y controles.
 
 ::: {#tbl-reveladoras-cancer}
 | Código | Descripción clínica |
@@ -100,7 +100,7 @@ La inspección detallada de las 765 variables confirmó esta sospecha. Se identi
 
 Con el propósito de subsanar esta deficiencia y evaluar si era factible construir un clasificador estático legítimo y reproducible, se eliminaron todas las variables reveladoras y se rediseñó el espacio de características apoyándose en las ontologías biomédicas estándar que codifican los datos:
 
-1. **Diagnósticos y procedimientos (SNOMED-CT y CIE-10):** Codificados originalmente en SNOMED-CT [@snomed_es]. Para reducir la excesiva granularidad y mitigar la dispersión, se planificó agrupar conceptos por sus relaciones jerárquicas de ancestros. Debido a que las limitaciones de tasa de peticiones en la API pública de SNOMED International [@snomed_browser] impedían procesar las consultas ECL necesarias de forma masiva, se optó por desplegar localmente un servidor terminológico **Snowstorm** mediante contenedores Docker, importando e indexando íntegramente la *International Edition* con aproximadamente 526 000 conceptos activos. Mediante este servicio se extrajeron los ancestros ontológicos:
+1. **Diagnósticos y procedimientos (SNOMED CT y CIE-10):** Codificados originalmente en SNOMED CT [@snomed_es]. Para reducir la excesiva granularidad y mitigar la dispersión, los conceptos se agruparon por sus relaciones jerárquicas de ancestros. Debido a que las limitaciones de tasa de peticiones en la API pública de SNOMED International [@snomed_browser] impedían procesar las consultas ECL necesarias de forma masiva, se optó por desplegar localmente un servidor terminológico **Snowstorm** mediante contenedores Docker, importando e indexando íntegramente la *International Edition* con aproximadamente 526 000 conceptos activos. Mediante este servicio se extrajeron los ancestros ontológicos:
    - Los diagnósticos (*disorder* y *finding*) se redujeron de 178 variables a 90 categorías consolidadas tras eliminar atributos con más del 99 % de nulos.
    - Los procedimientos (*procedure* y *therapy*) pasaron de 186 a 123 variables.
    - Adicionalmente, se utilizó el mapeo oficial de SNOMED a la Clasificación Internacional de Enfermedades (CIE-10 [@cie10]), reduciendo el espacio de diagnósticos a unas 150 categorías con amplia interpretabilidad clínica.
@@ -119,11 +119,11 @@ Con el propósito de subsanar esta deficiencia y evaluar si era factible constru
 
 ## Persistencia del sesgo: el experimento nulo
 
-Tras aplicar esta rigurosa ingeniería ontológica y haber depurado las variables explícitamente reveladoras, se entrenó un modelo gradient boosting (*XGBoost*) para comprobar si el rendimiento se normalizaba en rangos clínicamente realistas.
+Tras esta reorganización ontológica y tras depurar las variables explícitamente reveladoras, se entrenó un modelo gradient boosting (*XGBoost*) para comprobar si el rendimiento se normalizaba en rangos clínicamente realistas.
 
-El resultado, sin embargo, volvió a ser inverosímil: el modelo alcanzó nuevamente métricas casi perfectas con un F1 de 0,99 (@tbl-metricas_ing_medicaas-test). Al analizar la importancia de variables calculada por el modelo (@tbl-top5-variables-importantes), la variable más determinante resultó ser la preparación de frotis citopatológico, acompañada por la edad y marcadores como la hipertrigliceridemia o el sodio. La citopatología actuaba de nuevo como un indicador indirecto de sospecha tumoral avanzada.
+El modelo volvió a alcanzar métricas casi perfectas con un F1 de 0,99 (@tbl-metricas-ing-medica-test). Al analizar la importancia de variables calculada por el modelo (@tbl-top5-variables-importantes), la variable más determinante resultó ser la preparación de frotis citopatológico, acompañada por la edad y marcadores como la hipertrigliceridemia o el sodio. La citopatología actuaba de nuevo como un indicador indirecto de sospecha tumoral avanzada.
 
-::: {#tbl-metricas_ing_medicaas-test}
+::: {#tbl-metricas-ing-medica-test}
 | Modelo | F1 | Precisión | Sensibilidad |
 |:-------|:--:|:---------:|:------------:|
 | **XGBoost** | 0,99 | 0,99 | 0,99 |
@@ -145,58 +145,56 @@ El resultado, sin embargo, volvió a ser inverosímil: el modelo alcanzó nuevam
 
 ### Modelo exclusivo de variables de laboratorio
 
-Ante la persistencia de sesgos en los códigos diagnósticos y procedimientos, se formuló una hipótesis adicional: evaluar si prescindiendo de toda codificación médica externa y utilizando **exclusivamente analíticas de laboratorio continuas (LOINC)** era posible capturar una señal biológica real sin contaminación diagnóstica.
+Ante la persistencia de sesgos en los códigos diagnósticos y procedimientos, se formuló una hipótesis adicional: evaluar si prescindiendo de toda codificación médica externa y utilizando exclusivamente analíticas de laboratorio continuas (LOINC) era posible capturar una señal biológica real sin contaminación diagnóstica.
 
 Se preprocesaron las analíticas separando magnitudes continuas (imputadas a cero y estandarizadas) y categóricas. Se optimizaron cuatro familias algorítmicas mediante validación cruzada estratificada de 5 particiones con métrica `f1_weighted`: Random Forest (36 configuraciones), SVM (16 configuraciones), XGBoost y redes neuronales densas (*MLPClassifier*).
 
-El mejor rendimiento en test lo obtuvo el perceptrón multicapa (*MLPClassifier*, @tbl-metricas-lab-test y @fig-pr-roc-lab), alcanzando un F1 de 0,71 y un ROC-AUC de 0,933. Si bien estas cifras resultaban superficialmente más "plausibles" que las de los modelos previos, seguían reflejando un poder discriminante extraordinario a partir de un conjunto muy básico de analíticas generales.
+El mejor rendimiento en test lo obtuvo el perceptrón multicapa (*MLPClassifier*, @tbl-metricas-lab-test y @fig-pr-roc-lab), alcanzando un F1 de 0,71 y un ROC-AUC de 0,933. Aunque son menos extremas que las de los modelos previos, estas cifras siguen siendo muy altas para un conjunto básico de analíticas generales.
 
 ::: {#tbl-metricas-lab-test}
 | Modelo | F1 | Precisión | Sensibilidad | ROC-AUC | PR-AUC |
 |:-------|:--:|:---------:|:------------:|:-------:|:------:|
-| **MLPClassifier** | 0,7100 | 0,7800 | 0,6600 | 0,9330 | 0,8334 |
+| **MLPClassifier** | 0,71 | 0,78 | 0,66 | 0,933 | 0,833 |
 
 : "Métricas en el conjunto de test del modelo basado exclusivamente en variables de laboratorio LOINC."
 :::
 
 ![Curvas PR-AUC y ROC-AUC del modelo de laboratorio en test.](images/pr_roc_modelo_lab.png){#fig-pr-roc-lab width="100%"}
 
-### Modelo con diagnósticos CIE-10 y hallazgo del sesgo de síntesis
+### Modelo con diagnósticos CIE-10 y sesgo de construcción de la cohorte
 
-De forma complementaria, se evaluó un clasificador restringido únicamente a las ~150 variables de diagnóstico mapeadas a CIE-10 (reduciendo a las 25 características principales tras selección). La optimización arrojó un modelo SVM con métricas nuevamente exorbitantes (F1 de 0,88 y ROC-AUC de 0,981, @tbl-metricas-cie10-test y @fig-pr-roc-cie).
+De forma complementaria, se evaluó un clasificador restringido únicamente a las ~150 variables de diagnóstico mapeadas a CIE-10 (reduciendo a las 25 características principales tras selección). La optimización dio un modelo SVM de nuevo con métricas muy altas (F1 de 0,88 y ROC-AUC de 0,981, @tbl-metricas-cie10-test y @fig-pr-roc-cie).
 
 ::: {#tbl-metricas-cie10-test}
 | Modelo | F1 | Precisión | Sensibilidad | ROC-AUC | PR-AUC |
 |:-------|:--:|:---------:|:------------:|:-------:|:------:|
-| **SVM** | 0,8800 | 0,8900 | 0,8800 | 0,9807 | 0,9525 |
+| **SVM** | 0,88 | 0,89 | 0,88 | 0,981 | 0,953 |
 
 : "Métricas en el conjunto de test del modelo basado exclusivamente en diagnósticos CIE-10."
 :::
 
 ![Curvas PR-AUC y ROC-AUC del modelo de diagnósticos CIE-10.](images/pr_roc_modelo_cie.png){#fig-pr-roc-cie width="100%"}
 
-La explicación definitiva de este fenómeno se descubrió al realizar un contraste de distribuciones entre pacientes sanos y pacientes con cáncer de pulmón (@fig-comparativa-distr-cie). Al modelar la prevalencia de cada diagnóstico como una variable de Bernoulli $X_i \sim \text{Be}(p_i)$, se constató que prácticamente **todas** las variables diagnósticas exhibían diferencias estadísticas acusadas y artificialmente consistentes entre ambos grupos. Asimismo, cuando el modelo de laboratorio se evaluó en cohortes sintéticas independientes sin reentrenar (@fig-evaluacion-nuevas-cohortes), su comportamiento mostró una gran disparidad.
+La explicación de este comportamiento aparece al contrastar las distribuciones de pacientes sanos y de pacientes con cáncer de pulmón (@fig-comparativa-distr-cie). Al modelar la prevalencia de cada diagnóstico como una variable de Bernoulli $X_i \sim \text{Be}(p_i)$, prácticamente todas las variables diagnósticas mostraban diferencias marcadas entre ambos grupos. Asimismo, cuando el modelo de laboratorio se evaluó en cohortes sintéticas independientes sin reentrenar (@fig-evaluacion-nuevas-cohortes), su rendimiento varió mucho de una cohorte a otra.
 
-::: {#fig-comparativa-distr-cie-box}
 ![Distribución y disparidad de frecuencias de los diagnósticos CIE-10 entre pacientes con y sin cáncer en la cohorte estática.](images/comparativa_distr_var_cie.png){#fig-comparativa-distr-cie width="100%"}
-:::
 
-::: {#fig-evaluacion-nuevas-cohortes-box}
 ![Evaluación del modelo de laboratorio al transferirlo a nuevas cohortes sintéticas.](images/evaluacion_nuevas_cohortes.png){#fig-evaluacion-nuevas-cohortes width="100%"}
-:::
 
-La causa de este comportamiento no residía en un patrón fisiológico de predicción temprana, sino en el **método de síntesis de los datos**: al sintetizar el conjunto de datos de Chen y Chen a partir de Synthea, los registros de los pacientes con cáncer de pulmón se generaron a través de trayectorias sintéticas que presentaban frecuencias de utilización del sistema sanitario, prescripciones y analíticas radicalmente distintas a las de la población control. El clasificador no predecía el riesgo biológico a futuro, sino la firma estadística artificial producida por el propio generador sintético.
+Este comportamiento no refleja un patrón fisiológico de predicción temprana, sino la forma en que se construyó la cohorte original. Al cortar en el tiempo las historias de Synthea para obtener la tabla transversal de Chen y Chen, los pacientes con cáncer de pulmón quedaron con frecuencias de utilización del sistema sanitario, prescripciones y analíticas muy distintas de las de los controles. El clasificador no aprendía el riesgo futuro, sino la huella que esa construcción dejaba en los datos.
 
-## Conclusión: Del experimento nulo a la formulación longitudinal
+## Conclusión: del experimento nulo a la formulación longitudinal
 
-La reproducción experimental del estudio de referencia arrojó una conclusión rotunda: **se trataba de un experimento vacío**. Ningún refinamiento algorítmico, regularización matemática o selección de variables sobre ese corte transversal podía corregir el hecho de que el problema estaba mal formulado:
-1. Había una fuga masiva de información derivada de diagnósticos y tratamientos tardíos.
+La reproducción experimental del estudio de referencia llevó a una conclusión clara: sobre ese corte transversal, el experimento no podía informar sobre el riesgo. Ningún ajuste del algoritmo, de la regularización o de la selección de variables corregía tres problemas de formulación:
+
+1. Había una fuga de información derivada de diagnósticos y tratamientos tardíos.
 2. La agregación estática colapsaba el tiempo clínico, mezclando eventos que ocurrieron años antes con pruebas realizadas días previos al diagnóstico.
-3. El proceso de síntesis separaba artificialmente las cohortes de casos y controles en casi todos sus descriptores.
+3. La construcción de la cohorte separaba artificialmente las cohortes de casos y controles en casi todos sus descriptores.
 
-Este hallazgo justificó abandonar por completo la vía de la clasificación estática y replantear el Trabajo Fin de Máster desde sus bases metodológicas:
-- Abandonar los cortes transversales agregados y trabajar directamente sobre **historias clínicas electrónicas sintéticas longitudinales** completas, preservando cada visita con su fecha exacta.
-- Imponer un protocolo formal de **landmarking**, fijando instantes prospectivos de predicción basados en la edad (de 45 a 70 años) y evaluando únicamente la información acumulada *antes* de dicho hito.
-- Tratar la censura y el tiempo hasta el evento mediante **análisis de supervivencia** formal y verosimilitud parcial de Cox con horizonte a 5 años, eliminando el sesgo de selección de casos y controles.
-- Emplear arquitecturas diseñadas para **series temporales clínicas irregulares** (LSTM, GRU-D y transformers STraTS), cuya comparación rigurosa sobre este protocolo temporal limpio constituye el cuerpo central de la presente memoria.
+Este hallazgo justificó abandonar la vía de la clasificación estática y replantear el Trabajo Fin de Máster desde sus bases metodológicas:
+
+- Abandonar los cortes transversales agregados y trabajar directamente sobre historias clínicas electrónicas sintéticas longitudinales completas, preservando cada visita con su fecha exacta.
+- Imponer un protocolo formal de *landmarking*, fijando instantes prospectivos de predicción basados en la edad (de 45 a 70 años) y evaluando únicamente la información acumulada *antes* de dicho hito.
+- Tratar la censura y el tiempo hasta el evento mediante análisis de supervivencia formal y verosimilitud parcial de Cox con horizonte a 5 años, eliminando el sesgo de selección de casos y controles.
+- Emplear arquitecturas diseñadas para series temporales clínicas irregulares (LSTM, GRU-D y transformers STraTS), cuya comparación bajo este protocolo constituye el cuerpo central de la presente memoria.
 

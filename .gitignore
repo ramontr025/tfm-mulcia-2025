@@ -95,7 +95,8 @@ docs/
 appendix/**/docs/
 MemoriaTFM/docs/
 
-# Temporales de compilación LaTeX / Graphviz en MemoriaTFM
+# Temporales y recursos generados por Quarto / LaTeX / Graphviz
+*_files/
 MemoriaTFM/*.aux
 MemoriaTFM/*.log
 MemoriaTFM/*.toc
